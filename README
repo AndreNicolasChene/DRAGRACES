@@ -1,0 +1,122 @@
+Dear GRACES user,
+Thank you for your interest in the pipeline DRAGRACES. 
+Please, feel free to modify it to your taste.
+If you want to share your improvements, please join us at:
+  http://drforum.gemini.edu/topic/graces-pipeline-dragraces/
+
+Andre-Nicolas Chene
+
+
+
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+PREREQUISITES:
+
+ - IDL (only tested under IDL 8+)
+ - Astrolib (http://idlastro.gsfc.nasa.gov/ftp/)
+ - imdisp.pro (https://www.idlcoyote.com/programs/coyoteplus/imdisp.pro)
+     . if you do no want imdisp, simply comment line 956 
+ note1: make sure that Astrolib and imdisp are copied into your IDL libraries
+ note2: a future release will also contain an executable that can be ran with
+        an IDL licence!
+
+______________________________________________________________________________
+------------------------------------------------------------------------------
+PROGRAMME NAME AND SUBROUTINES
+
+program name: dg
+subroutines:  overs_corr
+              find_trace
+              find_lines
+              reduce
+              extract
+              wavel_sol
+              wavel_cal
+The pipeline and all the subroutines are in the same .pro file, i.e., "dg.pro".
+
+______________________________________________________________________________
+------------------------------------------------------------------------------
+HOW TO RUN IT
+
+1. Move or copy all the data of a given night with associated calibrations files
+   to the same diectory. Make sure no other files from other nights are in the
+   same directory. (There are ways to handle data from multiple nights, but they
+   are not fully tested yet; see below the optional inputs.)
+2. Run IDL and compile "dg.pro" TWICE:
+       IDL> .r dg    ;-> will spit lots of errors due to the functions
+       IDL> .r dg    ;-> will compile everything happily
+3. Type "dg". If the pipeline is in the same directory as the data, you do not 
+   need to provide any input. If it is not, use the optional input "dir" to give
+   the path to the data. E.g.:
+       IDL> dg,dir='/home/myaccount/myproject/mydata/20150721/'
+
+______________________________________________________________________________
+------------------------------------------------------------------------------
+DESCRIPTION OF DG.PRO OPTIONS
+
+    CALLING SEQUENCE:
+      dg[,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,/skip_wavel,/ascii_file,/new,/help]
+      
+    INPUTS (all optional):
+         dir - Path to where the data can be found. A new directory named "Reduction" will
+               be created, if it does not already exist.
+      utdate - Date when the spectra where observed. The format is YYYYMMDD, and can be
+               given as a number (without ''). If it not provided, it is expected that the
+               data in the directory pointed by the input "dir" are all from the same date. 
+       lbias - Name of a file where the bias frames are listed.
+       lflat - Name of a file where the flats frames are listed.
+       lthar - Name of a file where the ThAr frames are listed.
+  skip_wavel - When provided, the wavelength solution is not calculated.
+  ascii_file - (NOT YET WORKING)
+         new - Forces DRAGRACES to recalculate all the calibrations instead of using those
+               obtained in a previous run of the pipeline
+        logo - Displays the DRAGRACES logo when you run the pipeline!
+        help - Displays this help summary.
+    OUTPUTS:
+      The program saves the extracted spectra in the fits format, in the directory "Reduction".
+      If the wavelength solution was calculated, the filenames start with "ext_". If not, 
+      the filenames start with "red_", and an additional "red_Thar_..." spectrum is provided.
+
+
+______________________________________________________________________________
+------------------------------------------------------------------------------
+COPYRIGHT
+
+There is no copyright. Please, copy as often as you want. Also, modify it and use it
+for your own good. 
+
+______________________________________________________________________________
+------------------------------------------------------------------------------
+HOW TO SUBMIT BUGS AND REQUESTS
+
+Very important: DO NOT SUBMIT A GEMINI HELPDESK TICKET.
+If you want to report a problem, use the Gemini Data Reduction Forum thread where the pipeline
+is shared to post it.
+
+______________________________________________________________________________
+------------------------------------------------------------------------------
+FUTURE IMPROVMENTS
+
+1. There is no rejection method used to create the Master calibrations files.
+   A future release should include rejections techniques, such as minmax or
+   sigma-clipping.
+2. There is no rejection method used when the spectra are extracted. A future
+   release should include cosmic ray rejections.
+3. The interpolation dealing with the trace curvature AND the slit tilt is
+   a linear interpolation. It does an OK job, but is causing some artifacts
+   near the edges of the traces. A future release should deal with that better.
+4. Each order contains 4640 pixels. However, the optical resolution elements
+   are slightly undersampled. Thanks to the slit tilt, we can reconstruct a
+   little better the optical resolution elements. A future release will
+   interpolate better the optical resolution elements.
+
+______________________________________________________________________________
+------------------------------------------------------------------------------
+AUTHOR
+
+Andre-Nicolas Chene
+ -share your own work and your name could show up here too!
+
+
+
+Visit www.gemini.edu/node/12552 for more information.

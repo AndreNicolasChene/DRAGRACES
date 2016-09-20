@@ -1,18 +1,6 @@
-;FINISH 2-fiber mode
-;   tilt for 2-fiber
-;   proper extraction for 2-fibr
-;Nice things
-;   plots for wavel cal
-;   help desc.
-;   writting wwarnings
-;   finishing commenting code
-;   cleaning up development plotting  (e.g. tilt)
-;Additional performances
-;   improving extr-red wavel cal.
-;   order 57
+; GRACES pipeline, by Andre-Nicolas Chene
 
-
-pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,new=new,help=help
+pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip_wavel,ascii_file=ascii_file,new=new,logo=logo,help=help
 
 print,''
 print,''
@@ -23,14 +11,46 @@ print,' |    `   \    |   \/    |    \    \_\  \|    |   \/    |    \     \____|
 print,'/_______  /____|_  /\____|__  /\______  /|____|_  /\____|__  /\______  /_______  /_______  /'
 print,'        \/       \/         \/        \/        \/         \/        \/        \/        \/ '
 print,' Data Reduction and Analysis for GRACES (Gemini Remote Access to CFHT ESPaDOnS Spectrograph)'
+if keyword_set(logo) then begin
+  print,'   ______  ______  ______  ______  ______  ______  ______  ______  ______  ______  ______       ,****,,,.........                                           '
+  print,'  /_____/ /_____/ /_____/ /_____/ /_____/ /_____/ /_____/ /_____/ /_____/ /_____/ /_____/     .*                 .*                                         '
+  print,'                                                                                             *.  ,.........,,,,..    .,*                                    '
+  print,'                                                                                           ,*  .,........      ..       *                                   '
+  print,'                                                                                     .,  *,   ,,,..........    ,    ,/.,*.                                  '
+  print,'                                                                                   ,    *.   .,,,,,.......... ,     ,.,      .,                             '
+  print,'                     .*********.                                                  ,    * .   *,,,,,,,..........     . *           ,                         '
+  print,'                 *,,*.           .**                                             ,,**,.,*,  ***,,,,,,,,,.....,     . ,/,.          .                        '
+  print,'              **.*,                 .*.                                         .,  */,**,  *****,,,,,,,,,..,.     ,/*.    .,,**.   ,                       '
+  print,'            **,,*                      *.                                        .**,,.,*  ********,,,,,,,,,*       *,*   ****.  .,*..                      '
+  print,'           /*,,*                        .*                                        .** ***  /*********,,,,,,,,       *,,   *,  *,,,,  *                      '
+  print,'         ./***,                           *                                       *** **,. ...,*********,,,*       .**   .,* .,* .,*,                       '
+  print,'         /****    *     *      *           *                                      **,,**.                    *.    ,**   ,** *** *,*                        '
+  print,'        */**/    *     ,.     *     .,     ,.                                    .*/ **,.                    *.    **,   **, **. **.                        '
+  print,'        //**,   .,     *      *     *       *                                    */*.// .                    *     //.   **..** ,**                         '
+  print,'       .//*/    *.    .*,    ,.    *        *                                   ,**,*// ,                    *    ,//   ,// */* /*,                         '
+  print,'       .//*,                       *        *                                 ,..../  , .                    ,   ****.  */* //,.//                          '
+  print,'        *                                  .,                    /&@/%#.      .    *  . .,*****,,...        .,   , *****,,.    .,*                          '
+  print,'        * ....,,,,.....   ,,               *                  *..,(./&&((.    ,    ,..,         .....,,,,****,.  , *          ..,,,*   ,%@&/#&,             '
+  print,'        .,,,,,,,,,,,,,,,...Ã, ,..,,,.     ,.                ...../,#,,,,%%/,,,,**,..*/.                         .,.,               ,.,..,/,(@@#(,           '
+  print,'         *...,,,,,,....      ,, ..,,.   .*,                 ,...,/**...*.                     ...,,*****,,...   .,*               ,...../,#,,..(&/          '
+  print,'       ,.,,,,....,,,,,,,,..,    ..,,,. .*.                  ,,,,&//,*                                                ,,  ...,******,...,/**......@#         '
+  print,'        ..                   ,, ..,,.   .,                  @@@@@(***                                                             ,,,,*@//,       @%        '
+  print,'       ,((/.                        ,#''+#,                  &@@@@%(%*                          *,*,*.*                            .@@@@@(//.      .@.       '
+  print,'  ''@@*#@\#%&%                  ,`@@./%##&#                 .@@@@@#@*,...                   ,*****,*.*                             %@@@@&(%.. .    %&       '
+  print,'  @#@@/(**&&*,%%               ,:@@(/#,&&%#%%                ,@@@@@%@&.....,&@.....,*/////***/**////*,...,,                         @@@@@(@&...   .#@       '
+  print,' (*@@@&&.+Â`.&,%%              /@@@@&%,`.+#%%,,*********,,,..,@@@@&&@@#,,*/##*,.                            ?,,.....,,,,****//*****/@@@@@%@@......&@.       '
+  print,'  ,@@@%&++...*%.&+............. @@@@&&/+...#(/&+                .####%%@@@@@@@(                                                       .@@@@@%@@&,,,%.       '
+  print,'   (@@@%&+,(&&%.&%              ,@@@@%&%.#&&(/&%                ,@@@#&@@@@(.                                                         (@@@@#@@@@@@@/         '
+  print,'    .(@@/%&/#&&%                 ,/@@@&&%#&&&*                       .,*/*,.                                                             *&@@@@@@*          '
+  print,'      .****(%&&.                  .*///#%&&%*                                                                                                .,,,.          '
+  print,''
+endif
 print,''
-print,'   ______  ______  ______  ______  ______  ______  ______  ______  ______  ______  ______'
-print,'  /_____/ /_____/ /_____/ /_____/ /_____/ /_____/ /_____/ /_____/ /_____/ /_____/ /_____/'
+print,'~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*'
 print,''
-print,''
-print,'Version 0.0 - UNDER DEVELOPMENT'
+print,'Version 0.1 - beta version'
 print,'Author: Andre-Nicolas Chene'
-print,'Release date:'
+print,'Release date: 20 September 2016'
 print,''
 print,''
 
@@ -39,17 +59,44 @@ if keyword_set(help) then begin
   print,'NAME:'
   print,'    dg.pro'
   print,'EXPLANATION:'
+  print,'    This program is designed to reduce and extract spectra obtained with the Gemini/CFHT high-'
+  print,'    resolution spectrograph GRACES (Gemini Remote Access to the CFHT ESPaDOnS Spectrograph).'
+  print,'    (www.gemini.edu/sciops/instruments/graces)'
+  print,'    '
   print,'CALLING SEQUENCE:'
-  print,'    dg[,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,/new,/help]'
-  print,'INPUTS:'
-  print,'       dir - '
-  print,'    utdate - '
-  print,'     lbias - '
-  print,'     lflat - '
-  print,'     lthar - '
-  print,'       new - '
-  print,'      help - '
+  print,'    dg[,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,/skip_wavel,/ascii_file,/new,/help]'
+  print,'    '
+  print,'INPUTS (all optional):'
+  print,'       dir - Path to where the data can be found. A new directory named ""Reduction"" will'
+  print,'             be created, if it does not already exist.'
+  print,'    utdate - Date when the spectra where observed. The format is YYYYMMDD, and can be'
+  print,'             given as a number (without ''''). If it not provided, it is expected that the'
+  print,'             data in the directory pointed by the input ""dir"" are all from the same date. '
+  print,'     lbias - Name of a file where the bias frames are listed.'
+  print,'     lflat - Name of a file where the flats frames are listed.'
+  print,'     lthar - Name of a file where the ThAr frames are listed.'
+  print,'skip_wavel - When provided, the wavelength solution is not calculated.'
+  print,'ascii_file - (NOT YET WORKING)'
+  print,'       new - Forces DRAGRACES to recalculate all the calibrations instead of using those'
+  print,'             obtained in a previous run of the pipeline'
+  print,'      logo - Displays the DRAGRACES logo when you run the pipeline!'
+  print,'      help - Displays this help summary.'
   print,'OUTPUTS:'
+  print,'    The program saves the extracted spectra in the fits format, in the directory ""Reduction"".'
+  print,'    If the wavelength solution was calculated, the filenames start with ""ext_"". If not, '
+  print,'    the filenames start with ""red_"", and an additional ""red_Thar_..." spectrum is provided.'
+  print,''
+  print,'IMPORTANT NOTE:'
+  print,''
+  print,'    The pipeline expets the files to be ""well behaved"". It expects all the files in a given'
+  print,'    folder to be relevant to the extraction. If calibrations data of different nigts are in the'
+  print,'    same folder, they will be blended and potentially wrong. Unless you use the file list'
+  print,'    option, but they have not been fully tested yet. Visit www.gemini.edu/node/12552 for more'
+  print,'    information.'
+  print,''
+  print,'ENJOY!'
+  print,''
+  goto,fin
 endif 
 
 
@@ -134,7 +181,6 @@ lthar1f=[]   ;ThAr for 1-fiber mode
 lthar2f=[]   ;ThAr for 2-fiber mode
 lsci1f=[]    ;Objects for 1-fiber mode
 lsci2f=[]    ;Objects for 2-fiber mode
-
 for i=0,n_elements(lstot)-1 do begin
   h=headfits(lstot[i])
   if strcmp(strtrim(sxpar(h,'OBSTYPE'),2),'BIAS') then begin
@@ -350,10 +396,10 @@ endif
 
 
 
-
-;;;;;SHOULD BE idx=1,2
-for idx=1,1 do begin
+;Loops on the 2 possible spectral modes
+for idx=1,2 do begin
   case idx of
+    ;sets-up parameters for the 1-fiber mode
     1: begin
       if lflat1f ne !NULL and lthar1f ne !NULL then begin
         spmd='1f'
@@ -369,10 +415,11 @@ for idx=1,1 do begin
         resel=resel1f
       endif else begin
         print,''
-        print,'ERROR: missing calibrations for the 1-fiber mode'
+        if lsci1f ne !NULL then print,'ERROR: missing calibrations for the 1-fiber mode'
         goto,skip_loop
       endelse
     end
+    ;sets-up parameters for the 2-fiber mode
     2: begin
       if lflat2f ne !NULL and lthar2f ne !NULL then begin
         spmd='2f'
@@ -388,7 +435,7 @@ for idx=1,1 do begin
         resel=resel2f
       endif else begin
         print,''
-        print,'ERROR: missing calibrations for the 2-fiber mode'
+        if lsci2f ne !NULL then print,'ERROR: missing calibrations for the 2-fiber mode'
         goto,fin
       endelse
     end
@@ -486,40 +533,106 @@ for idx=1,1 do begin
   wavel2d=reduce(thar,matcoeff,wdt,slit_tilt)
   wavel2d=wavel2d/flatN
   wavel_sp=extract(wavel2d,wdt,spmd)
-  ;Finds the pix position of strongest lines
-  line_list=find_lines(wavel_sp,wavel2d,spmd,wdt,resel,nonlin)
-  wavel_sol_per_order=wavel_sol(line_list,spmd)
-  
+  if keyword_set(skip_wavel) then begin
+    ;Saves the extracted ThAr spectrum
+    s=size(wavel_sp)
+    fits_open,reddir+'red_ThAr_sp'+thardate+spmd+'.fits',un,/write
+    for i=0,nord-1 do begin
+      spectrum=total(wavel_sp[i,*],1)
+      mkhdr,h,spectrum,/image
+      sxaddpar,h,'NAXIS',1
+      sxaddpar,h,'NAXIS1',s[2]
+      sxdelpar,h,'NAXIS2'
+      fits_write,un,spectrum,h,extname='order '+strtrim(string(i+first_order),2),extver=i+1
+    endfor
+    fits_close,un
+  endif else begin
+    ;Finds the pix position of strongest lines
+    line_list=find_lines(wavel_sp,wavel2d,spmd,wdt,resel,nonlin)
+    wavel_sol_per_order=wavel_sol(line_list,spmd,vec_lines_used=vec_lines_used)
+    ;displays the identified lines in a multiple pages .ps file.
+    ; note that most of the follow variables are tuned to give acceptable plots.
+    set_plot,'ps'
+    device,filename=reddir+'Identification'+spmd+thardate+'.ps',/color;,/landscape
+    pos=where(vec_lines_used[0,*] eq -1)
+    for i=0,nord-1 do begin
+      if i mod 5 eq 0 then begin
+        multiplot,/default
+        multiplot,[1,5],ygap=.01
+      endif
+      spectrum=wavel_sp[i,*]
+      pix_pos=vec_lines_used[0,pos[i]+1:pos[i+1]-1]
+      wav_pos=vec_lines_used[1,pos[i]+1:pos[i+1]-1]
+      ylable=spectrum[pix_pos]
+      posy=where(ylable gt 8000)
+      if max(posy) ne -1 then ylable[posy]=8000
+      if (i+1) mod 5 eq 0 then xttl='pixels' else xttl=''
+      plot,spectrum,yrange=[0,10000],xtitle=xttl,ytitle='ADU',title='Order '+strtrim(string(i+first_order),2),/xst,xrange=[0,4300]
+      plotsym,1
+      oplot,pix_pos,ylable,psym=8,color=255
+      for j=0,pos[i+1]-pos[i]-2 do xyouts,pix_pos[j]+5,ylable[j]+20,strtrim(string(wav_pos[j]),2),color=255,orientation=90,charsize=0.7
+      multiplot
+      if (i+1) mod 5 eq 0 then erase
+    endfor
+    multiplot,/reset
+    device,/close
+    set_plot,'x'
+  endelse
+ stop 
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ; EXTRACTION
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-  ;LOOP ON SCIENCE
+  ;LOOP ON SCIENCE FRAMES
   for j=0,n_elements(lsci)-1 do begin
+    ;reads the science frame
     im=readfits(lsci[j],h,/silent)
+    ;picks the right bias
     if sxpar(h,'RDNOISEA') eq 4.2 then bias_i=biasNr else bias_i=biasSr
+    ;corrects for the bias level using the overscan
     im=overs_corr(im,overs)
+    ;corrects for the bias structure (usually pretty flat) using the bias frame
     im=im-bias_i
+    ;reduces the 2d spectrum
     sci2d=reduce(im,matcoeff,wdt,slit_tilt)
+    ;corrects for the flat field
     sci2d=sci2d/flatN
+    ;extracts the spectrum
     sci=extract(sci2d,wdt,spmd)
-    final=wavel_cal(sci,wavel_sol_per_order,param=param)
   
     s=size(im)
-    fits_open,reddir+'red_'+strmid(lsci[j],strlen(datadir)),un,/write
+    ;would save the extracted spectrum if the wavelength calibration is skipped
+    if keyword_set(skip_wavel) then begin
+      fits_open,reddir+'red_'+strmid(lsci[j],strlen(datadir)),un,/write
+    ;would calibrate for the wavelength and save the final spectrum
+    endif else begin
+      final=wavel_cal(sci,wavel_sol_per_order,param=param)
+      fits_open,reddir+'ext_'+strmid(lsci[j],strlen(datadir)),un,/write
+    endelse
     for i=0,nord-1 do begin
-      mkhdr,h,final[i,*],/image
-      sxaddpar,h,'NAXIS',1
-      sxaddpar,h,'NAXIS1',s[2]
-      sxdelpar,h,'NAXIS2'
-      sxaddpar,h,'CTYPE1','WAVE-WAV-PLY'
-      sxaddpar,h,'CUNIT1','Angstrom'
-      sxaddpar,h,'DC-FLAG',0
-      sxaddpar,h,'CRPIX1',1
-      sxaddpar,h,'CRVAL1',param[0,i]
-      sxaddpar,h,'CD1_1',param[1,i]
-      fits_write,un,total(final[i,*],1),h,extname='order '+strtrim(string(i+first_order),2),extver=i+1
+      ;if the spectrum is NOT calibrated
+      if keyword_set(skip_wavel) then begin
+        spectrum=total(sci[i,*],1)
+        mkhdr,h,spectrum,/image
+        sxaddpar,h,'NAXIS',1
+        sxaddpar,h,'NAXIS1',s[2]
+        sxdelpar,h,'NAXIS2'
+      ;if the spectrum is calibrated
+      endif else begin
+        spectrum=total(final[i,*],1)
+        mkhdr,h,spectrum,/image
+        sxaddpar,h,'NAXIS',1
+        sxaddpar,h,'NAXIS1',s[2]
+        sxdelpar,h,'NAXIS2'
+        sxaddpar,h,'CTYPE1','WAVE-WAV-PLY'
+        sxaddpar,h,'CUNIT1','Angstrom'
+        sxaddpar,h,'DC-FLAG',0
+        sxaddpar,h,'CRPIX1',1
+        sxaddpar,h,'CRVAL1',param[0,i]
+        sxaddpar,h,'CD1_1',param[1,i]
+      endelse
+      fits_write,un,spectrum,h,extname='order '+strtrim(string(i+first_order),2),extver=i+1
     endfor
     fits_close,un
   endfor
@@ -680,6 +793,8 @@ end
 ; used to find the ThAr lines or to measure the slit tilt
 function find_lines,sp_1d,sp_2d,spmd,wdt,resel,nonlin,find_tilt=find_tilt
 s=size(sp_1d)
+;the variable step is used to double the size of the matrix when also the sky
+;  spectrum needs to be extracted in the 2-fiber mode
 case spmd of
   '1f': step=1
   '2f': step=2
@@ -782,28 +897,16 @@ for i=0,s[1]/step-1 do begin
                 endfor
                 
                 ;fits the slit tilt
-                res=ladfit(findgen(n_elements(vcen)),vcen)
-                if max(vec_tilt) eq -1 then vec_tilt=res[1] else vec_tilt=[vec_tilt,res[1]]
+                if step eq 1 then begin
+                  res=ladfit(findgen(n_elements(vcen)),vcen)
+                  if max(vec_tilt) eq -1 then vec_tilt=res[1] else vec_tilt=[vec_tilt,res[1]]
+                endif else begin
+                  res1=ladfit(findgen(wdt/2),vcen[0:wdt/2-1])
+                  res2=ladfit(findgen(round(wdt/2.)),vcen[wdt/2:n_elements(vcen)-1])
+                  if max(vec_tilt) eq -1 then vec_tilt=[(res1[1]+res2[1])/2] else vec_tilt=[vec_tilt,(res1[1]+res2[1])/2]
+                endelse
               endif
             endif
-
-if 0 eq 1 then begin
-x=findgen(n_elements(vcen))
-  ss=size(sample)
-  window,0,xsize=ss[1]*50,ysize=ss[2]*50
-  imdisp,-1*sample,/usepos
-  if go eq 1 then begin
-  plot,vcen,position=[0,0,1,1],color=255,/noerase,xrange=[0,n_elements(vcen)],yrange=[-1*ss[2]/2,ss[2]/2],xstyle=7,ystyle=7,psym=4
-  oplot,res[0]+x*res[1],color=255
-  endif else begin
-  plot,vcen,position=[0,0,1,1],color=-255,/noerase,xrange=[0,n_elements(vcen)],yrange=[-1*ss[2]/2,ss[2]/2],xstyle=7,ystyle=7,psym=4
-  oplot,res[0]+x*res[1],color=-255
-  endelse
-  window,1
-  plot,ytest
-  wait,.1
-endif
-  ;          stop
           endif
         endif
       endif
@@ -838,11 +941,13 @@ end
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 function reduce,im,matcoeff,wdt,slit_tilt,mask=mask,normal=normal,notilt=notilt,disp=disp,dir=dir
 s=size(im)
-len=s[2]
+len=s[2] ;number of pixels along the spectrum
 s=size(matcoeff)
-nord=s[2]
+nord=s[2] ;number of orders to extract
+;final variable with the reduced 2D spectrum
 sp2d=fltarr(nord*wdt,len)
 
+;saves a display of the original ThAr frame with an overlay of the traces with the slit-tilt.
 if keyword_set(disp) then begin
   sim=size(im)
   set_plot,'ps'
@@ -852,16 +957,20 @@ if keyword_set(disp) then begin
   loadct,13
 endif
 
+;variable to hold a strip corresponding to the rectified trace of the current order
 band=fltarr(wdt,len)
 for i=0,nord-1 do begin
+  ;grabs the coefficient of the polynomial fit of the current order
   res=matcoeff[*,i]
   for k=0,len-1 do begin
-
+    ;recreates the fit of the trace
     pos_center=0.
     for j=0,n_elements(res)-1 do pos_center=pos_center+res[j]*double(k)^j
+    ;contains the tilt to add to the slit (=0 if no slit tilt is used)
     slope_extr=0.
     if keyword_set(notilt) ne 1 then slope_extr=slope_extr+(slit_tilt[0,i]+k*slit_tilt[1,i])
     
+    ;interpolation along the trace
     b1=-4
     b2=4
     if k+b1 lt 0 then b1=-1*k
@@ -871,15 +980,15 @@ for i=0,nord-1 do begin
     b=(-1*b1)*slope_extr
     rge=dindgen(wdt+1)-wdt/2
     decim=pos_center-fix(pos_center)
-    for l=0,wdt-1 do temp[l]=bilinear(sample,l+decim,l*slope_extr+b-b1)
+    for l=0,wdt-1 do temp[l]=bilinear(sample,l+decim,l*slope_extr+b-b1) ; the interpolation is using the bilinear IDL function
     
-    
+    ;for the display
     if keyword_set(disp) then begin
       if i eq 0 and k eq 1 then plot,rge+pos_center,rge*slope_extr+b+k,xrange=[0,sim[1]-1],/xst,yrange=[0,sim[2]-1],/yst,/nodata,/noerase,position=[0,0,1,1]
       if k mod 10 eq 0 then oplot,rge+pos_center,rge*slope_extr+b+k,color=255
     endif
     
-    
+    ;if the pixels above the non-linearity threshold are masked
     if keyword_set(mask) then begin
       pos=where(temp gt mask)
       if max(pos) ne -1 then if n_elements(pos) eq n_elements(temp) then temp=fltarr(wdt) else temp[pos]=0
@@ -899,8 +1008,10 @@ for i=0,nord-1 do begin
       band[j,*]=band[j,*]/yfit
     endfor
   endif
+  ;sticks the "band" to the 2D spectrum, and loops to the next order
   sp2d[i*wdt:(i+1)*wdt-1,*]=band
 endfor
+;closes the figure displaying the traces
 if keyword_set(disp) then begin
   device,/close
   set_plot,'x'
@@ -916,11 +1027,10 @@ end
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 function extract,sp2d,wdt,spmd
 s=size(sp2d)
-nord=s[1]/wdt
-len=s[2]
+nord=s[1]/wdt ;number of orders extracted
+len=s[2]      ;number of pixels along the spectrum
 
-
-;KILL last 300pix please
+;this is simply adding up the columns corresponding to the trace. Nothing sophisticated there...
 case spmd of
   '1f': begin
     sp1d=fltarr(nord,s[2])
@@ -939,6 +1049,7 @@ case spmd of
   end
 endcase
 
+;Kills the last 300pix (affected by vignetting)
 sp1d[*,4300:len-1]=0
 return,sp1d
 
@@ -950,8 +1061,13 @@ end
 ;  FUNCTION WHERE THE WAVELENGTH SOLUTION IS CALCULATED
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; used to find the ThAr lines or to measure the slit tilt
-function wavel_sol,line_list,spmd
+function wavel_sol,line_list,spmd,vec_lines_used=vec_lines_used
 
+;These are first guesses of the wavelength calibration solution
+;They were obtained from a ThAr spectrum from commissining, extracted
+;   using DRAGRACES, and calibrated using IRAF. It is expected that 
+;   all ThAr would have comparable solutions, with a lateral shift
+;   withing 0.1 A (i.e. few 100s km/s)
 coeff_orders=[$
 ;[10336.0,0.147116,-5.51402e-05,2.90528e-08,-5.11140e-12],$ ;order 21
 [10071.5,0.103340,-3.04415e-06,-4.96906e-12,-1.24169e-15],$ ;order 22
@@ -1009,34 +1125,42 @@ ThAr_list=$
 7992.1588,7993.6808,7996.9691,8000.0449,8003.4551,8006.1567,8014.7857,8017.5275,8022.2014,8024.2530,8025.7271,8026.2135,8030.2004,8032.4313,8032.9061,8035.6377,8037.2183,8046.1169,8050.6480,8053.3085,8054.5355,8062.6304,8066.8267,8075.6518,8085.2190,8089.4852,8092.2373,8093.6238,8094.0559,8096.2600,8103.6931,8105.3947,8115.3110,8119.1811,8122.7234,8129.4051,8137.9363,8138.4753,8139.9032,8143.1380,8149.7021,8152.3818,8157.5434,8159.7277,8162.0587,8163.1210,8166.4477,8169.7865,8172.1234,8177.1788,8186.9113,8190.8849,8194.3943,8198.4420,8202.1469,8203.2009,8205.1110,8207.4785,8209.4461,8214.1472,8217.2264,8227.4722,8227.6828,8231.4069,8234.9381,8252.3936,8253.6156,8254.7422,8259.5110,8261.0143,8264.5225,8275.6266,8288.4143,8292.5272,8295.5497,8297.1765,8304.4244,8311.6306,8320.8554,8330.4494,8335.7067,8341.4770,8346.5427,8356.0693,8357.8357,8358.7260,8360.4915,8366.0741,8367.3936,8369.3404,8379.2261,8379.7679,8383.0884,8384.7240,8385.7280,8387.1053,8388.5363,8398.1780,8399.2578,8401.9890,8403.7965,8408.2096,8411.9172,8416.7269,8417.9982,8421.2254,8424.6475,8445.4870,8446.5116,8450.6754,8456.3468,8464.2367,8465.6706,8471.8260,8478.3580,8490.3065,8498.0161,8500.6797,8501.4398,8510.6240,8511.9091,8513.4063,8516.5542,8519.3316,8521.4422,8530.9108,8531.4506,8532.9137,8534.6797,8539.7930,8542.0871,8543.7225,8544.5955,8554.9440,8556.3250,8558.4464,8560.4348,8568.2088,8573.1205,8575.3305,8577.2768,8587.6342,8591.8387,8593.1089,8599.7553,8604.0163,8605.7762,8616.2219,8620.4602,8621.3225,8629.1415,8631.3565,8638.3623,8639.4416,8645.3087,8649.1490,8655.8760,8662.1372,8665.4855,8667.9442,8675.3983,8678.4083,8687.8480,8701.1209,8703.7025,8704.8601,8707.3592,8709.2341,8710.4142,8712.8528,8713.6547,8719.6290,8721.6595,8722.4577,8724.3761,8732.4240,8734.0234,8739.7816,8748.0309,8749.1697,8758.2434,8760.4496,8761.6862,8766.7450,8771.8602,8772.8052,8775.5733,8782.7156,8784.5621,8790.3761,8792.0572,8798.1720,8799.0875,8804.5894,8810.2540,8812.5111,8816.1728,8817.7431,8820.2312,8820.4210,8821.7586,8829.6938,8841.1833,8842.0744,8848.3052,8849.3151,8852.7916,8854.9079,8857.8731,8859.0181,8859.4123,8860.9757,8862.2915,8866.7145,8868.8334,8875.2324,8881.9003,8882.5115,8889.1939,8890.2805,8892.9865,8893.5397,8899.2971,8905.6581,8907.0331,8910.8566,8912.7739,8917.5099,8919.7742,8920.2012,8924.2459,8927.7293,8928.0925,8941.6608,8948.4211,8949.1227,8955.8467,8957.9860,8959.2846,8962.1468,8962.8942,8964.0530,8967.0031,8967.6403,8968.9461,8969.8667,8979.7026,8980.7395,8985.2808,8987.4079,8990.4779,8990.8935,8995.1893,8997.8763,8999.5264,9008.4636,9009.8832,9011.5152,9012.5263,9013.9748,9016.5903,9017.5912,9031.8194,9035.9195,9037.8938,9038.6911,9040.1229,9045.3532,9048.2501,9053.4858,9056.0813,9058.2586,9062.5631,9063.9600,9066.1115,9068.0230,9069.5817,9072.2785,9075.3945,9090.8186,9094.8289,9101.0826,9103.3420,9105.4689,9107.2269,9109.3144,9111.5314,9113.4542,9118.1378,9119.6365,9122.9674,9126.3292,9129.1822,9130.9682,9132.2739,9134.6919,9135.9375,9137.7316,9140.5559,9153.3664,$
 9155.2968,9156.9236,9157.4218,9159.0346,9165.8950,9167.7950,9170.8220,9178.7795,9181.8967,9187.5654,9192.5937,9193.5928,9194.6385,9197.2557,9199.6841,9203.9617,9208.0252,9208.5811,9215.9197,9221.4324,9224.4992,9227.5119,9232.4960,9233.2739,9233.8574,9234.3987,9239.3261,9240.2158,9243.7603,9245.2557,9248.1186,9249.9067,9250.5782,9260.3254,9263.6830,9266.2070,9266.9198,9267.6895,9270.1501,9271.1802,9276.2732,9279.7085,9286.3805,9289.5624,9291.5313,9294.9740,9300.0131,9307.8956,9310.4440,9317.7296,9323.0400,9327.2462,9336.1624,9340.7053,9349.2523,9354.2198,9355.9911,9360.9879,9366.7971,9379.7288,9380.6439,9383.2722,9384.0997,9388.9308,9390.5852,9392.2645,9393.7757,9399.0891,9406.8923,9409.3488,9413.6761,9414.0886,9417.4570,9420.4985,9422.3137,9422.9331,9431.5996,9432.2827,9435.1230,9436.8127,9446.9891,9450.4608,9455.2023,9456.0216,9461.0279,9467.1954,9470.6819,9474.8793,9486.9256,9495.4979,9497.1891,9500.2999,9504.2159,9505.3930,9507.6525,9508.4513,9510.9465,9514.7986,9535.6566,9536.4070,9548.0303,9553.9847,9561.2452,9565.5588,9567.2805,9567.8292,9570.4022,9571.5019,9577.3475,9582.8133,9587.0275,9588.8066,9590.3432,9595.3906,9605.8059,9607.5347,9608.4866,9608.9352,9613.6911,9619.2179,9620.9953,9625.1984,9627.6706,9629.5693,9630.7442,9632.6439,9636.9019,9641.1951,9642.4776,9643.3195,9657.7863,9663.6433,9664.6983,9674.7914,9676.8364,9685.6771,9695.0311,9700.5631,9702.2720,9713.1103,9716.1420,9718.4922,9736.2125,9738.6224,9739.7704,9743.5614,9746.4629,9753.5920,9757.2197,9764.6062,9769.5348,9779.4532,9784.5028,9789.5111,9796.2002,9797.2456,9800.3629,9801.7074,9812.6976,9814.9578,9819.1781,9826.4497,9833.4232,9837.1669,9838.0046,9840.9172,9845.6835,9855.7421,9864.5972,9865.4489,9867.8902,9868.9206,9871.9947,9872.6300,9873.8151,9878.5208,9880.7853,9896.0483,9898.3532,9902.3569,9906.3907,9907.4718,9910.0750,9911.1129,9912.1996,9913.6234,9923.3088,9927.3252,9932.7748,9934.7173,9935.1992,9938.8355,9943.0647,9952.3704,9952.8033,9963.4911,9970.4625,9974.6893,9985.0500,9987.6352,9989.9371,9992.6485,9993.8630,9998.5092,9998.9599,10011.3953,10022.2836,10033.2218,10037.1188,10039.3641,10045.3125,10048.0365,10054.9620,10056.2091,10079.5414,10082.8793,10083.7854,10086.4035,10089.1351,10102.5746,10105.0769,10117.9901,10133.5662,10137.3865,10140.4309,10141.3970,10144.2649,10175.0079,10178.5192,10180.5933,10184.5392,10188.4156,10211.5330,10218.4327,10223.6585,10236.0280,10241.7747,10247.5568,10250.6792,10255.5804,10257.3690,10258.1668,10271.1881,10273.6965,10276.7976,10283.1162,10288.9919,10293.0491,10301.1668,10308.5442,10316.8910,10343.8210,10346.5367,10349.0483,10358.1678,10412.9915,10419.5787,10429.6706,10450.4421,10459.7208,10470.0535,10492.2578,10494.8400,10498.4920,10512.2045,10527.7862,10556.4500,10565.3047]
 
+;depends on which spectra mode we are in
 case spmd of
   '1f': step=1
   '2f': step=2
 endcase
 
-nord=(max(line_list[0,*])+1)*step
-res=fltarr(5,nord)
+nord=(max(line_list[0,*])+1)*step ;number of orders extracted
+res=fltarr(5,nord)                ;variable with the final wavelength solution for all the orders
+vec_lines_used=[-1,-1]            ;vector of the lines that were used for the final solution
 for i=0,nord-1 do begin
   for ll=1,2 do begin
+    ;takes the information for the current order
     pos=where(line_list[0,*] eq i/step)
+    ;vector with the pixel position of the lines found
     pix_pos=line_list[1,pos]
+    ;if we are in the first loop, the guess solution comes from coeff_orders. if not, it comes from the result from the first loop
     if ll eq 1 then coeff=coeff_orders[*,i/step]
     
+    ;removes the lines from the vignetted area (last 300 pixels)
     pos=where(pix_pos gt 4300)
     if max(pos) ne -1 then remove,pos,pix_pos
     
+    ;applies the current solution to convert pixel position into wavelength
     line_wave=coeff[0]+coeff[1]*(pix_pos+1)+coeff[2]*(pix_pos+1)^2+coeff[3]*(pix_pos+1)^3+coeff[4]*(pix_pos+1)^4
+    ;compares the calculated wavelengths with the ThAr line list
     pos=where(ThAr_list ge min(line_wave) and ThAr_list le max(line_wave))
     ThAr_list_temp=Thar_list[pos]
+    ;measures the difference between the calculated and the expected wavelengths
     vec_diff=fltarr(n_elements(line_wave))
-    
     for k=1,2 do begin
       for j=0,n_elements(line_wave)-1 do begin
         junk=min(abs(line_wave[j]-ThAr_list_temp),pos)
         vec_diff[j]=line_wave[j]-ThAr_list_temp[pos]
-        if k eq 2 then line_wave[j]=ThAr_list_temp[pos]
+        if k eq 2 then line_wave[j]=ThAr_list_temp[pos] ;if we are in the final (2nd) loop, it associates the line with its wavelength
       endfor
-      if k eq 1 then line_wave=line_wave-median(vec_diff)
+      if k eq 1 then line_wave=line_wave-median(vec_diff) ;if we are in the first loop, if shifts the calculated wavelength to get closer to the real ones
     endfor
     
     ;looks for difference in line central wavelength greater than 5 km/s
@@ -1044,14 +1168,21 @@ for i=0,nord-1 do begin
     pos=where(abs(vec_diff) ge .1) 
     if max(pos) ne -1 then if n_elements(pos) lt n_elements(vec_diff)-3 then remove,pos,pix_pos,line_wave else if ll eq 2 then print,'WARNING!!! wavelength solution might be wrong for order '+strtrim(string(i/step+22),2)
     
+    ;Does the final fit of the pixel position vs wavelength for all the remaining lines
+    ;the while loop is to remove deviant points
     pos=0
     while max(pos) ne -1 and n_elements(pix_pos) ge 3 do begin
       new_coeff=poly_fit(pix_pos,line_wave,4,yfit=yfit)
       dev=line_wave-yfit
-      pos=where(abs(dev) ge 3*stddev(dev))
+      pos=where(abs(dev) ge 3*stddev(dev)) ;removes deviant points
       if max(pos) ne -1 then if n_elements(pos) le n_elements(line_wave)-3 then remove,pos,pix_pos,line_wave else pos=-1
     endwhile
-    if ll eq 1 then coeff=new_coeff else res[*,i]=new_coeff
+    ;either feeds with a better initial solution (first loop) or send the final solution (second loop)
+    if ll eq 2 then begin
+      res[*,i]=new_coeff 
+      for k=0,n_elements(pix_pos)-1 do vec_lines_used=[[vec_lines_used],[pix_pos[k],line_wave[k]]]
+      vec_lines_used=[[vec_lines_used],[-1,-1]]
+    endif else coeff=new_coeff
   endfor
 endfor
 
@@ -1065,16 +1196,17 @@ end
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 function wavel_cal,sp,wavel_sol,param=param
 s=size(sp)
-final=fltarr(s[1],s[2])
-param=fltarr(2,s[1])
-vec_pix=findgen(s[2])
+final=fltarr(s[1],s[2]) ;final calibrated spectrum
+param=fltarr(2,s[1])    ;contains CRVAL1 and CD1_1
+vec_pix=findgen(s[2])   ;vector of pixel positions from 1 to #pix
+;resamples the spectrum to linearize the wavelength solution
 for i=0,s[1]-1 do begin
   coeff=wavel_sol[*,i]
-  x_lamb=coeff[0]+coeff[1]*vec_pix+coeff[2]*vec_pix^2+coeff[3]*vec_pix^3+coeff[4]*vec_pix^4
+  x_lamb=coeff[0]+coeff[1]*vec_pix+coeff[2]*vec_pix^2+coeff[3]*vec_pix^3+coeff[4]*vec_pix^4 ;wavelength solution
   param[0,i]=min(x_lamb)
   param[1,i]=(max(x_lamb)-min(x_lamb))/s[2]
   x_interp=findgen(s[2])*param[1,i]+param[0,i]
-  final[i,*]=spline(x_lamb,sp[i,*],x_interp)
+  final[i,*]=spline(x_lamb,sp[i,*],x_interp) ;resampling
 endfor
 
 
