@@ -48,7 +48,7 @@ endif
 print,''
 print,'~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*'
 print,''
-print,'Version 0.1 - beta version'
+print,'Version 1.0.1'
 print,'Author: Andre-Nicolas Chene'
 print,'Release date: 20 September 2016'
 print,''
@@ -578,7 +578,6 @@ for idx=1,2 do begin
     device,/close
     set_plot,'x'
   endelse
- stop 
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ; EXTRACTION
