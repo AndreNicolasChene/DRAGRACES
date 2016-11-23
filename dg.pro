@@ -609,7 +609,7 @@ for idx=1,2 do begin
       final=wavel_cal(sci,wavel_sol_per_order,param=param)
       fits_open,reddir+'ext_'+strmid(lsci[j],strlen(datadir)),un,/write
     endelse
-    for i=0,nord-1 do begin
+    for i=0,nord*idx-1 do begin
       ;if the spectrum is NOT calibrated
       if keyword_set(skip_wavel) then begin
         spectrum=total(sci[i,*],1)
