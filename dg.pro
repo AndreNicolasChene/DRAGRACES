@@ -842,6 +842,9 @@ for i=0,s[1]/step-1 do begin
         if coeff[1] gt px[pos]-lineHW/2. and coeff[1] lt px[pos]+lineHw/2. then begin
           ;samples the 2d ThAr spectrum around the identified potential line
           yb=round(coeff[1]+lineHW*[-1,1])
+          ;makes sure yb does not go outside the image borders
+          yb=yb>0
+          yb=yb<s[2]
           sample=sp_2d[i*wdt:(i+1)*wdt-1,yb[0]:yb[1]]
           ;uses the extracted shape od the line as reference (on non-continuum corrected spectrum)
           ref=sp[pos-lineHW:pos+lineHW]
