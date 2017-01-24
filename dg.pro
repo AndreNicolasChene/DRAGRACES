@@ -369,7 +369,7 @@ endif
 if lflat2f ne !NULL then begin
   ;gets the date from the header of the first flat
   ht=headfits(lflat2f[0])
-  date=sxpar(hf,'DATE')
+  date=sxpar(ht,'DATE')
   flat2fdate=strmid(date,0,4)+strmid(date,5,2)+strmid(date,8,2)
   
   ;checks first if the Master has not been created before
