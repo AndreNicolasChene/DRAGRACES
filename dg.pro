@@ -1,647 +1,7 @@
 ; GRACES pipeline, by Andre-Nicolas Chene
 
-pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip_wavel,ascii_file=ascii_file,new=new,logo=logo,help=help
-
-print,''
-print,''
-print,'________ __________    _____    __________________    _____  _________ ___________ _________'
-print,'\______ \\______   \  /  _  \  /  _____/\______   \  /  _  \ \_   ___ \\_   _____//   _____/'
-print,' |    |  \|       _/ /  /_\  \/   \  ___ |       _/ /  /_\  \/    \  \/ |    __)_ \_____  \ '
-print,' |    `   \    |   \/    |    \    \_\  \|    |   \/    |    \     \____|        \/        \'
-print,'/_______  /____|_  /\____|__  /\______  /|____|_  /\____|__  /\______  /_______  /_______  /'
-print,'        \/       \/         \/        \/        \/         \/        \/        \/        \/ '
-print,' Data Reduction and Analysis for GRACES (Gemini Remote Access to CFHT ESPaDOnS Spectrograph)'
-if keyword_set(logo) then begin
-  print,'   ______  ______  ______  ______  ______  ______  ______  ______  ______  ______  ______       ,****,,,.........                                           '
-  print,'  /_____/ /_____/ /_____/ /_____/ /_____/ /_____/ /_____/ /_____/ /_____/ /_____/ /_____/     .*                 .*                                         '
-  print,'                                                                                             *.  ,.........,,,,..    .,*                                    '
-  print,'                                                                                           ,*  .,........      ..       *                                   '
-  print,'                                                                                     .,  *,   ,,,..........    ,    ,/.,*.                                  '
-  print,'                                                                                   ,    *.   .,,,,,.......... ,     ,.,      .,                             '
-  print,'                     .*********.                                                  ,    * .   *,,,,,,,..........     . *           ,                         '
-  print,'                 *,,*.           .**                                             ,,**,.,*,  ***,,,,,,,,,.....,     . ,/,.          .                        '
-  print,'              **.*,                 .*.                                         .,  */,**,  *****,,,,,,,,,..,.     ,/*.    .,,**.   ,                       '
-  print,'            **,,*                      *.                                        .**,,.,*  ********,,,,,,,,,*       *,*   ****.  .,*..                      '
-  print,'           /*,,*                        .*                                        .** ***  /*********,,,,,,,,       *,,   *,  *,,,,  *                      '
-  print,'         ./***,                           *                                       *** **,. ...,*********,,,*       .**   .,* .,* .,*,                       '
-  print,'         /****    *     *      *           *                                      **,,**.                    *.    ,**   ,** *** *,*                        '
-  print,'        */**/    *     ,.     *     .,     ,.                                    .*/ **,.                    *.    **,   **, **. **.                        '
-  print,'        //**,   .,     *      *     *       *                                    */*.// .                    *     //.   **..** ,**                         '
-  print,'       .//*/    *.    .*,    ,.    *        *                                   ,**,*// ,                    *    ,//   ,// */* /*,                         '
-  print,'       .//*,                       *        *                                 ,..../  , .                    ,   ****.  */* //,.//                          '
-  print,'        *                                  .,                    /&@/%#.      .    *  . .,*****,,...        .,   , *****,,.    .,*                          '
-  print,'        * ....,,,,.....   ,,               *                  *..,(./&&((.    ,    ,..,         .....,,,,****,.  , *          ..,,,*   ,%@&/#&,             '
-  print,'        .,,,,,,,,,,,,,,,...Ã, ,..,,,.     ,.                ...../,#,,,,%%/,,,,**,..*/.                         .,.,               ,.,..,/,(@@#(,           '
-  print,'         *...,,,,,,....      ,, ..,,.   .*,                 ,...,/**...*.                     ...,,*****,,...   .,*               ,...../,#,,..(&/          '
-  print,'       ,.,,,,....,,,,,,,,..,    ..,,,. .*.                  ,,,,&//,*                                                ,,  ...,******,...,/**......@#         '
-  print,'        ..                   ,, ..,,.   .,                  @@@@@(***                                                             ,,,,*@//,       @%        '
-  print,'       ,((/.                        ,#''+#,                  &@@@@%(%*                          *,*,*.*                            .@@@@@(//.      .@.       '
-  print,'  ''@@*#@\#%&%                  ,`@@./%##&#                 .@@@@@#@*,...                   ,*****,*.*                             %@@@@&(%.. .    %&       '
-  print,'  @#@@/(**&&*,%%               ,:@@(/#,&&%#%%                ,@@@@@%@&.....,&@.....,*/////***/**////*,...,,                         @@@@@(@&...   .#@       '
-  print,' (*@@@&&.+Â`.&,%%              /@@@@&%,`.+#%%,,*********,,,..,@@@@&&@@#,,*/##*,.                            ?,,.....,,,,****//*****/@@@@@%@@......&@.       '
-  print,'  ,@@@%&++...*%.&+............. @@@@&&/+...#(/&+                .####%%@@@@@@@(                                                       .@@@@@%@@&,,,%.       '
-  print,'   (@@@%&+,(&&%.&%              ,@@@@%&%.#&&(/&%                ,@@@#&@@@@(.                                                         (@@@@#@@@@@@@/         '
-  print,'    .(@@/%&/#&&%                 ,/@@@&&%#&&&*                       .,*/*,.                                                             *&@@@@@@*          '
-  print,'      .****(%&&.                  .*///#%&&%*                                                                                                .,,,.          '
-  print,''
-endif
-print,''
-print,'~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*'
-print,''
-print,'Version 1.0.1'
-print,'Author: Andre-Nicolas Chene'
-print,'Release date: 20 September 2016'
-print,''
-print,''
-
-if keyword_set(help) then begin
-  print,''
-  print,'NAME:'
-  print,'    dg.pro'
-  print,'EXPLANATION:'
-  print,'    This program is designed to reduce and extract spectra obtained with the Gemini/CFHT high-'
-  print,'    resolution spectrograph GRACES (Gemini Remote Access to the CFHT ESPaDOnS Spectrograph).'
-  print,'    (www.gemini.edu/sciops/instruments/graces)'
-  print,'    '
-  print,'CALLING SEQUENCE:'
-  print,'    dg[,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,/skip_wavel,/ascii_file,/new,/help]'
-  print,'    '
-  print,'INPUTS (all optional):'
-  print,'       dir - Path to where the data can be found. A new directory named ""Reduction"" will'
-  print,'             be created, if it does not already exist.'
-  print,'    utdate - Date when the spectra where observed. The format is YYYYMMDD, and can be'
-  print,'             given as a number (without ''''). If it not provided, it is expected that the'
-  print,'             data in the directory pointed by the input ""dir"" are all from the same date. '
-  print,'     lbias - Name of a file where the bias frames are listed.'
-  print,'     lflat - Name of a file where the flats frames are listed.'
-  print,'     lthar - Name of a file where the ThAr frames are listed.'
-  print,'skip_wavel - When provided, the wavelength solution is not calculated.'
-  print,'ascii_file - (NOT YET WORKING)'
-  print,'       new - Forces DRAGRACES to recalculate all the calibrations instead of using those'
-  print,'             obtained in a previous run of the pipeline'
-  print,'      logo - Displays the DRAGRACES logo when you run the pipeline!'
-  print,'      help - Displays this help summary.'
-  print,'OUTPUTS:'
-  print,'    The program saves the extracted spectra in the fits format, in the directory ""Reduction"".'
-  print,'    If the wavelength solution was calculated, the filenames start with ""ext_"". If not, '
-  print,'    the filenames start with ""red_"", and an additional ""red_Thar_..." spectrum is provided.'
-  print,''
-  print,'IMPORTANT NOTE:'
-  print,''
-  print,'    The pipeline expets the files to be ""well behaved"". It expects all the files in a given'
-  print,'    folder to be relevant to the extraction. If calibrations data of different nigts are in the'
-  print,'    same folder, they will be blended and potentially wrong. Unless you use the file list'
-  print,'    option, but they have not been fully tested yet. Visit www.gemini.edu/node/12552 for more'
-  print,'    information.'
-  print,''
-  print,'ENJOY!'
-  print,''
-  goto,fin
-endif 
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;  INPUTS
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;;;;;;;;;;;;;;;
-;Directory were the data are:
-if keyword_set(dir) then datadir=dir else datadir='./'
-if strcmp(strmid(datadir,strlen(datadir)-1),'/') ne 1 then datadir=datadir+'/' ;adds the / if not included in the path
-reddir=datadir+'Reduction/'
-;creates the reduction directory if it does not exist
-if file_test(reddir) ne 1 then spawn,'mkdir '+reddir
-;converts the entered utdate into string
-if keyword_set(utdate) then utdate=strtrim(string(utdate),2)
-
-;;;;;;;;;;;;;;;;
-;Parameters for detector
-nonlin=46400 ;non-linearity threshold in ADU
-satura=65000 ;saturation limit in ADU
-overs=31     ;size of the overscan in pixel
-
-
-;;;;;;;;;;;;;;;;
-;Parameters for the traces (can be tunned)
-;;for 1-fiber more:
-;;width of a single section of the sliced image (e.g.          |-----|            )
-;;                                                        ----- ----- ----- ----
-ts1f=7 
-
-;;for 2-fiber more:
-;;width of a single section of the sliced image (e.g.          |-----|              )
-;;                                                        ----- -----    ----- ----
-ts2f=8
-
-;;width of the trace
-wdt1f=4*ts1f+1 ;1-fiber
-wdt2f=4*ts2f+1 ;2-fiber
-;;order of the polynomial fitting the trace
-nco=4
-;;first order to extract
-first_order=22
-;hardcoded x-pixel values used as a first guess where to find the traces
-;vcen=[38, 68,  99,  129,  160,  191,  223,  254,  287,  320,  354,  389, 424, 461, 499, 537, 577, 618, 660, 704, 748, 794, 842, 891, 941, 993, 1047, 1102,  1159,  1218,  1278,  1341,  1405,  1472,  1541, 1612, 1686] ;from order 21 to 57
-vcen=[68,  99,  129,  160,  191,  223,  254,  287,  320,  354,  389, 424, 461, 499, 537, 577, 618, 660, 704, 748, 794, 842, 891, 941, 993, 1047, 1102,  1159,  1218,  1278,  1341,  1405,  1472,  1541, 1612] ;from order 22 to 56
-;number of orders to extract
-nord=n_elements(vcen)
-
-;;;;;;;;;;;;;;;;
-;Parameters for the line identifycation (can be tunned)
-;optical resolution element in pixels
-resel1f=1.74
-resel2f=2.88
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;  LISTS CREATION
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-if keyword_set(utdate) then begin
-  ;Finds all the GRACES frames observed that utdate
-  lstot=findfile(datadir+'N'+utdate+'G*.fits')
-endif else begin
-  ;Finds all the GRACES frames in the data directory
-  lstot=findfile(datadir+'N????????G*.fits')
-endelse
-;checks if it any frame exist
-if min(strcmp(lstot,'')) eq 1 then begin
-  print,''
-  print,'ERROR: Could not find any GRACES observations.'
-  goto,fin 
-endif
-;creates the calibrations and the science lists
-lbiasNr=[]   ;Biases in normal read mode
-lbiasSr=[]   ;Biases in slow read mode
-lflat1f=[]   ;Flats for 1-fiber mode
-lflat2f=[]   ;Flats for 2-fiber mode
-lthar1f=[]   ;ThAr for 1-fiber mode
-lthar2f=[]   ;ThAr for 2-fiber mode
-lsci1f=[]    ;Objects for 1-fiber mode
-lsci2f=[]    ;Objects for 2-fiber mode
-for i=0,n_elements(lstot)-1 do begin
-  h=headfits(lstot[i])
-  if strcmp(strtrim(sxpar(h,'OBSTYPE'),2),'BIAS') then begin
-    if sxpar(h,'RDNOISEA') eq 4.2 then begin
-      if lbiasNr eq !NULL then lbiasNr=lstot[i] else lbiasNr=[lbiasNr,lstot[i]]
-    endif else if lbiasSr eq !NULL then lbiasSr=lstot[i] else lbiasSr=[lbiasSr,lstot[i]]
-  endif else begin
-    if strcmp(sxpar(h,'GSLIPOS'),'FOURSLICE') then begin
-      case strtrim(sxpar(h,'OBSTYPE'),2) of
-        'FLAT': if lflat1f eq !NULL then lflat1f=lstot[i] else lflat1f=[lflat1f,lstot[i]]
-        'ARC': if lthar1f eq !NULL then lthar1f=lstot[i] else lthar1f=[lthar1f,lstot[i]]
-        'OBJECT': if lsci1f eq !NULL then lsci1f=lstot[i] else lsci1f=[lsci1f,lstot[i]]
-      endcase
-    endif else begin
-      case strtrim(sxpar(h,'OBSTYPE'),2) of
-        'FLAT': if lflat2f eq !NULL then lflat2f=lstot[i] else lflat2f=[lflat2f,lstot[i]]
-        'ARC': if lthar2f eq !NULL then lthar2f=lstot[i] else lthar2f=[lthar2f,lstot[i]]
-        'OBJECT': if lsci2f eq !NULL then lsci2f=lstot[i] else lsci2f=[lsci2f,lstot[i]]
-      endcase
-    endelse
-  endelse
-endfor
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;  BIAS FRAMES CREATION
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;Takes the user's list of bias, if provided
-if keyword_set(lbias) then begin
-  readcol,lbias,format='(a)',lbias
-  h=headfits(lbias[0])
-  if sxpar(h,'RDNOISEA') eq 4.2 then lbiasNr=lbias else lbiasSr=lbias
-endif
-
-;checks if there was any bias observed in Normal readout mode.
-if lbiasNr ne !NULL then begin
-  ;gets the date from the header of the first bias
-  hb=headfits(lbiasNr[0])
-  date=sxpar(hb,'DATE')
-  biasdate=strmid(date,0,4)+strmid(date,5,2)+strmid(date,8,2)
-  
-  ;checks first if the Master has not been created before
-  if file_test(reddir+'BiasNormal'+biasdate+'.fits') and keyword_set(new) ne 1 then begin
-    ;if a Master Bias has already been processed, it takes this one.
-    biasNr=readfits(reddir+'BiasNormal'+biasdate+'.fits',/silent)
-  endif else begin
-    ;IMPORTANT NOTE: No rejection method used at this point!
-    for i=0,n_elements(lbiasNr)-1 do begin
-      im=readfits(lbiasNr[i],/silent) 
-      im_overs=overs_corr(im,overs)
-      if i eq 0 then biasNr=im_overs/n_elements(lbiasNr) else biasNr=biasNr+im_overs/n_elements(lbiasNr)
-    endfor
-    writefits,reddir+'BiasNormal'+biasdate+'.fits',biasNr;,hb
-  endelse
-endif
-;checks if there was any bias observed in Slow readout mode.
-if lbiasSr ne !NULL then begin
-  ;gets the date from the header of the first bias
-  hb=headfits(lbiasSr[0])
-  date=sxpar(hb,'DATE')
-  biasdate=strmid(date,0,4)+strmid(date,5,2)+strmid(date,8,2)
-  
-  ;checks first if the Master has not been created before
-  if file_test(reddir+'BiasSlow'+biasdate+'.fits') and keyword_set(new) ne 1 then begin
-    ;if a Master Bias has already been processed, it takes this one.
-    biasSr=readfits(reddir+'BiasSlow'+biasdate+'.fits',/silent)
-  endif else begin
-    ;IMPORTANT NOTE: No rejection method used at this point!
-    for i=0,n_elements(lbiasSr)-1 do begin
-      im=readfits(lbiasSr[i],/silent) 
-      im_overs=overs_corr(im,overs)
-      if i eq 0 then biasSr=im_overs/n_elements(lbiasSr) else biasSr=biasSr+im_overs/n_elements(lbiasSr)
-    endfor
-    writefits,reddir+'BiasSlow'+biasdate+'.fits',biasSr;,hb
-  endelse
-endif
-;cuts the program short if no bias is available
-if lbiasNr eq !NULL and lbiasSr eq !NULL then begin
-  print,''
-  print,'ERROR: Could not find any Bias frame'
-  goto,fin 
-endif
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;  ThAr FRAMES CREATION
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;Takes the user's list of ThAr, if provided
-if keyword_set(lthar) then begin
-  readcol,lthar,format='(a)',lthar
-  h=headfits(lthar[0])
-  if strcmp(sxpar(h,'GSLIPOS'),'FOURSLICE') then lthar1f=lthar else lthar2f=lthar
-endif
-
-;checks if there was any ThAr observed in 1-fiber mode.
-if lthar1f ne !NULL then begin
-  ;gets the date from the header of the first ThAr
-  ht=headfits(lthar1f[0])
-  date=sxpar(ht,'DATE')
-  thar1fdate=strmid(date,0,4)+strmid(date,5,2)+strmid(date,8,2)
-  
-  ;checks first if the Master has not been created before
-  if file_test(reddir+'ThAr1f'+thar1fdate+'.fits') and keyword_set(new) ne 1 then begin
-    ;if a Master ThAr has already been processed, it takes this one.
-    thar1f=readfits(reddir+'ThAr1f'+thar1fdate+'.fits',/silent)
-  endif else begin
-    ;IMPORTANT NOTE: No rejection method used at this point!
-    for i=0,n_elements(lthar1f)-1 do begin
-      im=readfits(lthar1f[i],/silent) 
-      im_overs=overs_corr(im,overs)
-      if i eq 0 then thar1f=im_overs/n_elements(lthar1f) else thar1f=thar1f+im_overs/n_elements(lthar1f)
-    endfor
-    thar1f=thar1f-biasNr
-    writefits,reddir+'ThAr1f'+thar1fdate+'.fits',thar1f;,ht
-  endelse
-endif
-;checks if there was any ThAr observed in 2-fiber mode.
-if lthar2f ne !NULL then begin
-  ;gets the date from the header of the first ThAr
-  ht=headfits(lthar2f[0])
-  date=sxpar(ht,'DATE')
-  thar2fdate=strmid(date,0,4)+strmid(date,5,2)+strmid(date,8,2)
-  
-  ;checks first if the Master has not been created before
-  if file_test(reddir+'ThAr2f'+thar2fdate+'.fits') and keyword_set(new) ne 1 then begin
-    ;if a Master ThAr has already been processed, it takes this one.
-    thar2f=readfits(reddir+'ThAr2f'+thar2fdate+'.fits',/silent)
-  endif else begin
-    ;IMPORTANT NOTE: No rejection method used at this point!
-    for i=0,n_elements(lthar2f)-1 do begin
-      im=readfits(lthar2f[i],/silent) 
-      im_overs=overs_corr(im,overs)
-      if i eq 0 then thar2f=im_overs/n_elements(lthar2f) else thar2f=thar2f+im_overs/n_elements(lthar2f)
-    endfor
-    thar2f=thar2f-biasNr
-    writefits,reddir+'ThAr2f'+thar2fdate+'.fits',thar2f;,ht
-  endelse
-endif
-;cuts the program short if no bias is available
-if lthar1f eq !NULL and lthar2f eq !NULL then begin
-  print,''
-  print,'ERROR: Could not find any ThAr spectrum'
-  goto,fin 
-endif
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;  FLAT FRAMES CREATION
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;Takes the user's list of flats, if provided
-if keyword_set(lflat) then begin
-  readcol,lflat,format='(a)',lflat
-  h=headfits(lflat[0])
-  if strcmp(sxpar(h,'GSLIPOS'),'FOURSLICE') then lflat1f=lflat else lflat2f=lflat
-endif
-
-;checks if there was any Flat observed in 1-fiber mode.
-if lflat1f ne !NULL then begin
-  ;gets the date from the header of the first flat
-  hf=headfits(lflat1f[0])
-  date=sxpar(hf,'DATE')
-  flat1fdate=strmid(date,0,4)+strmid(date,5,2)+strmid(date,8,2)
-  
-  ;checks first if the Master has not been created before
-  if file_test(reddir+'Flat1f'+flat1fdate+'.fits') and keyword_set(new) ne 1 then begin
-    ;if a Master Flat has already been processed, it takes this one.
-    flat1f=readfits(reddir+'Flat1f'+flat1fdate+'.fits',/silent)
-  endif else begin
-    ;IMPORTANT NOTE: No rejection method used at this point!
-    for i=0,n_elements(lflat1f)-1 do begin
-      im=readfits(lflat1f[i],/silent) 
-      im_overs=overs_corr(im,overs)
-      if i eq 0 then flat1f=im_overs/n_elements(lflat1f) else flat1f=flat1f+im_overs/n_elements(lflat1f)
-    endfor
-    flat1f=flat1f-biasNr
-    writefits,reddir+'Flat1f'+flat1fdate+'.fits',flat1f;,hf
-  endelse
-endif
-;checks if there was any Flat observed in 2-fiber mode.
-if lflat2f ne !NULL then begin
-  ;gets the date from the header of the first flat
-  ht=headfits(lflat2f[0])
-  date=sxpar(ht,'DATE')
-  flat2fdate=strmid(date,0,4)+strmid(date,5,2)+strmid(date,8,2)
-  
-  ;checks first if the Master has not been created before
-  if file_test(reddir+'Flat2f'+flat2fdate+'.fits') and keyword_set(new) ne 1 then begin
-    ;if a Master Flat has already been processed, it takes this one.
-    flat2f=readfits(reddir+'Flat2f'+flat2fdate+'.fits',/silent)
-  endif else begin
-    ;IMPORTANT NOTE: No rejection method used at this point!
-    for i=0,n_elements(lflat2f)-1 do begin
-      im=readfits(lflat2f[i],/silent) 
-      im_overs=overs_corr(im,overs)
-      if i eq 0 then flat2f=im_overs/n_elements(lflat2f) else flat2f=flat2f+im_overs/n_elements(lflat2f)
-    endfor
-    flat2f=flat2f-biasNr
-    writefits,reddir+'Flat2f'+flat2fdate+'.fits',flat2f;,hf
-  endelse
-endif
-;cuts the program short if no bias is available
-if lflat1f eq !NULL and lflat2f eq !NULL then begin
-  print,''
-  print,'ERROR: Could not find any Flat spectrum'
-  goto,fin 
-endif
-
-
-
-;Loops on the 2 possible spectral modes
-for idx=1,2 do begin
-  case idx of
-    ;sets-up parameters for the 1-fiber mode
-    1: begin
-      if lflat1f ne !NULL and lthar1f ne !NULL then begin
-        spmd='1f'
-        lflat=lflat1f
-        lthar=lthar1f
-        lsci=lsci1f
-        flat=flat1f
-        thar=thar1f
-        flatdate=flat1fdate
-        thardate=thar1fdate
-        ts=ts1f
-        wdt=wdt1f
-        resel=resel1f
-      endif else begin
-        print,''
-        if lsci1f ne !NULL then print,'ERROR: missing calibrations for the 1-fiber mode'
-        goto,skip_loop
-      endelse
-    end
-    ;sets-up parameters for the 2-fiber mode
-    2: begin
-      if lflat2f ne !NULL and lthar2f ne !NULL then begin
-        spmd='2f'
-        lflat=lflat2f
-        lthar=lthar2f
-        lsci=lsci2f
-        flat=flat2f
-        thar=thar2f
-        flatdate=flat2fdate
-        thardate=thar2fdate
-        ts=ts2f
-        wdt=wdt2f
-        resel=resel2f
-      endif else begin
-        print,''
-        if lsci2f ne !NULL then print,'ERROR: missing calibrations for the 2-fiber mode'
-        goto,fin
-      endelse
-    end
-  endcase 
-  if strcmp(flatdate,thardate) ne 1 then begin
-    print,''
-    print,'WARNING!!! The flatfield image and the ThAr spectrum are not from the same date.'
-    print,'           The real geometry on the 2D spectra may not correspond to the correcion applied.'
-    print,''
-  endif
-  
-  
-  
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;  FINDING THE TRACES
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  
-  ;Relies on the function "find_trace"
-  if lflat ne !NULL then begin
-    if file_test(reddir+'TraceCoeff_'+spmd+flatdate+'.dat') ne 1 or keyword_set(new) eq 1 then begin
-      ;calls find_trace
-      matcoeff=find_trace(flat,spmd,ts,wdt,vcen,nco)
-      ;records the result, so we do not need to recalculate it next time we reduce spectra from the same date
-      openw,lun,reddir+'TraceCoeff_'+spmd+flatdate+'.dat',/get_lun  ;the traces (x-position) are recorded here
-      for i=0,nord-1 do begin
-        temp=''
-        for j=0,nco do temp=temp+strtrim(string(double(matcoeff[j,i])),2)+' '
-        printf,lun,format='(a)',temp
-      endfor
-      close,lun
-      free_lun,lun
-    endif else begin
-      ;reads the values if it has already been calculated
-      openr,lun,reddir+'TraceCoeff_'+spmd+flatdate+'.dat',/get_lun
-      matcoeff=dblarr(nco+1,nord)
-      readf,lun,matcoeff
-      close,lun
-      free_lun,lun
-    endelse
-  endif
-  
-  
-  
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ; FINDING THE SLIT TILT
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  
-  ;Relies on the function "find_lines"
-  if file_test(reddir+'Tilt_'+spmd+thardate+'.dat') ne 1 or keyword_set(new) eq 1 then begin
-    ;reduces the ThAr frame, without applying a tilt
-    tilt_2d=reduce(thar,matcoeff,wdt,mask=nonlin,/notilt)
-    ;extracts the ThAr frame, so we can find the lines
-    tilt_1d=extract(tilt_2d,wdt,spmd)
-    ;calls find_lines
-    slit_tilt=find_lines(tilt_1d,tilt_2d,spmd,wdt,resel,nonlin,/find_tilt)
-    
-    ;records the result, so we do not need to recalculate it next time we reduce spectra from the same date
-    openw,lun,reddir+'Tilt_'+spmd+thardate+'.dat',/get_lun  ;the tilts are recorded here
-    for i=0,nord-1 do begin
-      temp=[strtrim(string(double(slit_tilt[0,i])),2),strtrim(string(double(slit_tilt[1,i])),2)]
-      printf,lun,format='(a,a,a)',temp[0],'  ',temp[1]
-    endfor
-    close,lun
-    free_lun,lun
-  endif else begin
-    ;reads the values if it has already been calculated
-    openr,lun,reddir+'Tilt_'+spmd+thardate+'.dat',/get_lun
-    slit_tilt=fltarr(2,nord)
-    readf,lun,slit_tilt
-    close,lun
-    free_lun,lun
-  endelse
-  
-  
-  
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ; REDUCTION OF CALIBRATIONS
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  wdt=wdt-1 ;the width is reduced by one pixel at this point; easier for reduction
-  
-  ;runs reduce on the ThAr wih the aim to produce an .eps figure showing where the
-  ;  traces are extracted, ans with which slit tilt.
-  junk=reduce(thar,matcoeff,wdt,slit_tilt,mask=nonlin,disp=spmd+thardate,dir=reddir)
-  
-  ;Gets the normalized flat field
-  flatN=reduce(flat,matcoeff,wdt,slit_tilt,mask=nonlin,/normal)
-  writefits,reddir+'FlatNorm'+spmd+flatdate+'.fits',flatN;,hf
-  
-
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ; LINE IDENTIFICATION
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;Extracts the ThAr spectrum for final line identification
-  wavel2d=reduce(thar,matcoeff,wdt,slit_tilt)
-  wavel2d=wavel2d/flatN
-  wavel_sp=extract(wavel2d,wdt,spmd)
-  if keyword_set(skip_wavel) then begin
-    ;Saves the extracted ThAr spectrum
-    s=size(wavel_sp)
-    fits_open,reddir+'red_ThAr_sp'+thardate+spmd+'.fits',un,/write
-    for i=0,nord-1 do begin
-      spectrum=total(wavel_sp[i,*],1)
-      mkhdr,h,spectrum,/image
-      sxaddpar,h,'NAXIS',1
-      sxaddpar,h,'NAXIS1',s[2]
-      sxdelpar,h,'NAXIS2'
-      fits_write,un,spectrum,h,extname='order '+strtrim(string(i+first_order),2),extver=i+1
-    endfor
-    fits_close,un
-  endif else begin
-    ;Finds the pix position of strongest lines
-    line_list=find_lines(wavel_sp,wavel2d,spmd,wdt,resel,nonlin)
-    wavel_sol_per_order=wavel_sol(line_list,spmd,vec_lines_used=vec_lines_used)
-    ;displays the identified lines in a multiple pages .ps file.
-    ; note that most of the follow variables are tuned to give acceptable plots.
-    set_plot,'ps'
-    device,filename=reddir+'Identification'+spmd+thardate+'.ps',/color;,/landscape
-    pos=where(vec_lines_used[0,*] eq -1)
-    for i=0,nord-1 do begin
-      if i mod 5 eq 0 then begin
-        multiplot,/default
-        multiplot,[1,5],ygap=.01
-      endif
-      spectrum=wavel_sp[i,*]
-      pix_pos=vec_lines_used[0,pos[i]+1:pos[i+1]-1]
-      wav_pos=vec_lines_used[1,pos[i]+1:pos[i+1]-1]
-      ylable=spectrum[pix_pos]
-      posy=where(ylable gt 8000)
-      if max(posy) ne -1 then ylable[posy]=8000
-      if (i+1) mod 5 eq 0 then xttl='pixels' else xttl=''
-      plot,spectrum,yrange=[0,10000],xtitle=xttl,ytitle='ADU',title='Order '+strtrim(string(i+first_order),2),/xst,xrange=[0,4300]
-      plotsym,1
-      oplot,pix_pos,ylable,psym=8,color=255
-      for j=0,pos[i+1]-pos[i]-2 do xyouts,pix_pos[j]+5,ylable[j]+20,strtrim(string(wav_pos[j]),2),color=255,orientation=90,charsize=0.7
-      multiplot
-      if (i+1) mod 5 eq 0 then erase
-    endfor
-    multiplot,/reset
-    device,/close
-    set_plot,'x'
-  endelse
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ; EXTRACTION
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-  ;LOOP ON SCIENCE FRAMES
-  for j=0,n_elements(lsci)-1 do begin
-    ;reads the science frame
-    im=readfits(lsci[j],h,/silent)
-    ;picks the right bias
-    if sxpar(h,'RDNOISEA') eq 4.2 then bias_i=biasNr else bias_i=biasSr
-    ;corrects for the bias level using the overscan
-    im=overs_corr(im,overs)
-    ;corrects for the bias structure (usually pretty flat) using the bias frame
-    im=im-bias_i
-    ;reduces the 2d spectrum
-    sci2d=reduce(im,matcoeff,wdt,slit_tilt)
-    ;corrects for the flat field
-    sci2d=sci2d/flatN
-    ;extracts the spectrum
-    sci=extract(sci2d,wdt,spmd)
-  
-    s=size(im)
-    ;would save the extracted spectrum if the wavelength calibration is skipped
-    if keyword_set(skip_wavel) then begin
-      fits_open,reddir+'red_'+strmid(lsci[j],strlen(datadir)),un,/write
-    ;would calibrate for the wavelength and save the final spectrum
-    endif else begin
-      final=wavel_cal(sci,wavel_sol_per_order,param=param)
-      fits_open,reddir+'ext_'+strmid(lsci[j],strlen(datadir)),un,/write
-    endelse
-    for i=0,nord*idx-1 do begin
-      ;if the spectrum is NOT calibrated
-      if keyword_set(skip_wavel) then begin
-        spectrum=total(sci[i,*],1)
-        mkhdr,h,spectrum,/image
-        sxaddpar,h,'NAXIS',1
-        sxaddpar,h,'NAXIS1',s[2]
-        sxdelpar,h,'NAXIS2'
-      ;if the spectrum is calibrated
-      endif else begin
-        spectrum=total(final[i,*],1)
-        mkhdr,h,spectrum,/image
-        sxaddpar,h,'NAXIS',1
-        sxaddpar,h,'NAXIS1',s[2]
-        sxdelpar,h,'NAXIS2'
-        sxaddpar,h,'CTYPE1','WAVE-WAV-PLY'
-        sxaddpar,h,'CUNIT1','Angstrom'
-        sxaddpar,h,'DC-FLAG',0
-        sxaddpar,h,'CRPIX1',1
-        sxaddpar,h,'CRVAL1',param[0,i]
-        sxaddpar,h,'CD1_1',param[1,i]
-      endelse
-      fits_write,un,spectrum,h,extname='order '+strtrim(string(i+first_order),2),extver=i+1
-    endfor
-    fits_close,un
-  endfor
-  
-  skip_loop:
-endfor
-
-fin:
-end
-
+; Main script is dg.pro
+; It can be found at the end, as the last pro, after all the functions.
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1214,5 +574,650 @@ endfor
 
 return,final
 end
+
+
+pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip_wavel,ascii_file=ascii_file,new=new,logo=logo,help=help
+
+  print,''
+  print,''
+  print,'________ __________    _____    __________________    _____  _________ ___________ _________'
+  print,'\______ \\______   \  /  _  \  /  _____/\______   \  /  _  \ \_   ___ \\_   _____//   _____/'
+  print,' |    |  \|       _/ /  /_\  \/   \  ___ |       _/ /  /_\  \/    \  \/ |    __)_ \_____  \ '
+  print,' |    `   \    |   \/    |    \    \_\  \|    |   \/    |    \     \____|        \/        \'
+  print,'/_______  /____|_  /\____|__  /\______  /|____|_  /\____|__  /\______  /_______  /_______  /'
+  print,'        \/       \/         \/        \/        \/         \/        \/        \/        \/ '
+  print,' Data Reduction and Analysis for GRACES (Gemini Remote Access to CFHT ESPaDOnS Spectrograph)'
+  if keyword_set(logo) then begin
+    print,'   ______  ______  ______  ______  ______  ______  ______  ______  ______  ______  ______       ,****,,,.........                                           '
+    print,'  /_____/ /_____/ /_____/ /_____/ /_____/ /_____/ /_____/ /_____/ /_____/ /_____/ /_____/     .*                 .*                                         '
+    print,'                                                                                             *.  ,.........,,,,..    .,*                                    '
+    print,'                                                                                           ,*  .,........      ..       *                                   '
+    print,'                                                                                     .,  *,   ,,,..........    ,    ,/.,*.                                  '
+    print,'                                                                                   ,    *.   .,,,,,.......... ,     ,.,      .,                             '
+    print,'                     .*********.                                                  ,    * .   *,,,,,,,..........     . *           ,                         '
+    print,'                 *,,*.           .**                                             ,,**,.,*,  ***,,,,,,,,,.....,     . ,/,.          .                        '
+    print,'              **.*,                 .*.                                         .,  */,**,  *****,,,,,,,,,..,.     ,/*.    .,,**.   ,                       '
+    print,'            **,,*                      *.                                        .**,,.,*  ********,,,,,,,,,*       *,*   ****.  .,*..                      '
+    print,'           /*,,*                        .*                                        .** ***  /*********,,,,,,,,       *,,   *,  *,,,,  *                      '
+    print,'         ./***,                           *                                       *** **,. ...,*********,,,*       .**   .,* .,* .,*,                       '
+    print,'         /****    *     *      *           *                                      **,,**.                    *.    ,**   ,** *** *,*                        '
+    print,'        */**/    *     ,.     *     .,     ,.                                    .*/ **,.                    *.    **,   **, **. **.                        '
+    print,'        //**,   .,     *      *     *       *                                    */*.// .                    *     //.   **..** ,**                         '
+    print,'       .//*/    *.    .*,    ,.    *        *                                   ,**,*// ,                    *    ,//   ,// */* /*,                         '
+    print,'       .//*,                       *        *                                 ,..../  , .                    ,   ****.  */* //,.//                          '
+    print,'        *                                  .,                    /&@/%#.      .    *  . .,*****,,...        .,   , *****,,.    .,*                          '
+    print,'        * ....,,,,.....   ,,               *                  *..,(./&&((.    ,    ,..,         .....,,,,****,.  , *          ..,,,*   ,%@&/#&,             '
+    print,'        .,,,,,,,,,,,,,,,...?, ,..,,,.     ,.                ...../,#,,,,%%/,,,,**,..*/.                         .,.,               ,.,..,/,(@@#(,           '
+    print,'         *...,,,,,,....      ,, ..,,.   .*,                 ,...,/**...*.                     ...,,*****,,...   .,*               ,...../,#,,..(&/          '
+    print,'       ,.,,,,....,,,,,,,,..,    ..,,,. .*.                  ,,,,&//,*                                                ,,  ...,******,...,/**......@#         '
+    print,'        ..                   ,, ..,,.   .,                  @@@@@(***                                                             ,,,,*@//,       @%        '
+    print,'       ,((/.                        ,#''+#,                  &@@@@%(%*                          *,*,*.*                            .@@@@@(//.      .@.       '
+    print,'  ''@@*#@\#%&%                  ,`@@./%##&#                 .@@@@@#@*,...                   ,*****,*.*                             %@@@@&(%.. .    %&       '
+    print,'  @#@@/(**&&*,%%               ,:@@(/#,&&%#%%                ,@@@@@%@&.....,&@.....,*/////***/**////*,...,,                         @@@@@(@&...   .#@       '
+    print,' (*@@@&&.+?`.&,%%              /@@@@&%,`.+#%%,,*********,,,..,@@@@&&@@#,,*/##*,.                            ?,,.....,,,,****//*****/@@@@@%@@......&@.       '
+    print,'  ,@@@%&++...*%.&+............. @@@@&&/+...#(/&+                .####%%@@@@@@@(                                                       .@@@@@%@@&,,,%.       '
+    print,'   (@@@%&+,(&&%.&%              ,@@@@%&%.#&&(/&%                ,@@@#&@@@@(.                                                         (@@@@#@@@@@@@/         '
+    print,'    .(@@/%&/#&&%                 ,/@@@&&%#&&&*                       .,*/*,.                                                             *&@@@@@@*          '
+    print,'      .****(%&&.                  .*///#%&&%*                                                                                                .,,,.          '
+    print,''
+  endif
+  print,''
+  print,'~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*'
+  print,''
+  print,'Version 1.0.1'
+  print,'Author: Andre-Nicolas Chene'
+  print,'Release date: 20 September 2016'
+  print,''
+  print,''
+
+  if keyword_set(help) then begin
+    print,''
+    print,'NAME:'
+    print,'    dg.pro'
+    print,'EXPLANATION:'
+    print,'    This program is designed to reduce and extract spectra obtained with the Gemini/CFHT high-'
+    print,'    resolution spectrograph GRACES (Gemini Remote Access to the CFHT ESPaDOnS Spectrograph).'
+    print,'    (www.gemini.edu/sciops/instruments/graces)'
+    print,'    '
+    print,'CALLING SEQUENCE:'
+    print,'    dg[,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,/skip_wavel,/ascii_file,/new,/help]'
+    print,'    '
+    print,'INPUTS (all optional):'
+    print,'       dir - Path to where the data can be found. A new directory named ""Reduction"" will'
+    print,'             be created, if it does not already exist.'
+    print,'    utdate - Date when the spectra where observed. The format is YYYYMMDD, and can be'
+    print,'             given as a number (without ''''). If it not provided, it is expected that the'
+    print,'             data in the directory pointed by the input ""dir"" are all from the same date. '
+    print,'     lbias - Name of a file where the bias frames are listed.'
+    print,'     lflat - Name of a file where the flats frames are listed.'
+    print,'     lthar - Name of a file where the ThAr frames are listed.'
+    print,'skip_wavel - When provided, the wavelength solution is not calculated.'
+    print,'ascii_file - (NOT YET WORKING)'
+    print,'       new - Forces DRAGRACES to recalculate all the calibrations instead of using those'
+    print,'             obtained in a previous run of the pipeline'
+    print,'      logo - Displays the DRAGRACES logo when you run the pipeline!'
+    print,'      help - Displays this help summary.'
+    print,'OUTPUTS:'
+    print,'    The program saves the extracted spectra in the fits format, in the directory ""Reduction"".'
+    print,'    If the wavelength solution was calculated, the filenames start with ""ext_"". If not, '
+    print,'    the filenames start with ""red_"", and an additional ""red_Thar_..." spectrum is provided.'
+    print,''
+    print,'IMPORTANT NOTE:'
+    print,''
+    print,'    The pipeline expets the files to be ""well behaved"". It expects all the files in a given'
+    print,'    folder to be relevant to the extraction. If calibrations data of different nigts are in the'
+    print,'    same folder, they will be blended and potentially wrong. Unless you use the file list'
+    print,'    option, but they have not been fully tested yet. Visit www.gemini.edu/node/12552 for more'
+    print,'    information.'
+    print,''
+    print,'ENJOY!'
+    print,''
+    goto,fin
+  endif
+
+
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;  INPUTS
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ;;;;;;;;;;;;;;;;
+  ;Directory were the data are:
+  if keyword_set(dir) then datadir=dir else datadir='./'
+  if strcmp(strmid(datadir,strlen(datadir)-1),'/') ne 1 then datadir=datadir+'/' ;adds the / if not included in the path
+  reddir=datadir+'Reduction/'
+  ;creates the reduction directory if it does not exist
+  if file_test(reddir) ne 1 then spawn,'mkdir '+reddir
+  ;converts the entered utdate into string
+  if keyword_set(utdate) then utdate=strtrim(string(utdate),2)
+
+  ;;;;;;;;;;;;;;;;
+  ;Parameters for detector
+  nonlin=46400 ;non-linearity threshold in ADU
+  satura=65000 ;saturation limit in ADU
+  overs=31     ;size of the overscan in pixel
+
+
+  ;;;;;;;;;;;;;;;;
+  ;Parameters for the traces (can be tunned)
+  ;;for 1-fiber more:
+  ;;width of a single section of the sliced image (e.g.          |-----|            )
+  ;;                                                        ----- ----- ----- ----
+  ts1f=7
+
+  ;;for 2-fiber more:
+  ;;width of a single section of the sliced image (e.g.          |-----|              )
+  ;;                                                        ----- -----    ----- ----
+  ts2f=8
+
+  ;;width of the trace
+  wdt1f=4*ts1f+1 ;1-fiber
+  wdt2f=4*ts2f+1 ;2-fiber
+  ;;order of the polynomial fitting the trace
+  nco=4
+  ;;first order to extract
+  first_order=22
+  ;hardcoded x-pixel values used as a first guess where to find the traces
+  ;vcen=[38, 68,  99,  129,  160,  191,  223,  254,  287,  320,  354,  389, 424, 461, 499, 537, 577, 618, 660, 704, 748, 794, 842, 891, 941, 993, 1047, 1102,  1159,  1218,  1278,  1341,  1405,  1472,  1541, 1612, 1686] ;from order 21 to 57
+  vcen=[68,  99,  129,  160,  191,  223,  254,  287,  320,  354,  389, 424, 461, 499, 537, 577, 618, 660, 704, 748, 794, 842, 891, 941, 993, 1047, 1102,  1159,  1218,  1278,  1341,  1405,  1472,  1541, 1612] ;from order 22 to 56
+  ;number of orders to extract
+  nord=n_elements(vcen)
+
+  ;;;;;;;;;;;;;;;;
+  ;Parameters for the line identifycation (can be tunned)
+  ;optical resolution element in pixels
+  resel1f=1.74
+  resel2f=2.88
+
+
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;  LISTS CREATION
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  if keyword_set(utdate) then begin
+    ;Finds all the GRACES frames observed that utdate
+    lstot=findfile(datadir+'N'+utdate+'G*.fits')
+  endif else begin
+    ;Finds all the GRACES frames in the data directory
+    lstot=findfile(datadir+'N????????G*.fits')
+  endelse
+  ;checks if it any frame exist
+  if min(strcmp(lstot,'')) eq 1 then begin
+    print,''
+    print,'ERROR: Could not find any GRACES observations.'
+    goto,fin
+  endif
+  ;creates the calibrations and the science lists
+  lbiasNr=[]   ;Biases in normal read mode
+  lbiasSr=[]   ;Biases in slow read mode
+  lflat1f=[]   ;Flats for 1-fiber mode
+  lflat2f=[]   ;Flats for 2-fiber mode
+  lthar1f=[]   ;ThAr for 1-fiber mode
+  lthar2f=[]   ;ThAr for 2-fiber mode
+  lsci1f=[]    ;Objects for 1-fiber mode
+  lsci2f=[]    ;Objects for 2-fiber mode
+  for i=0,n_elements(lstot)-1 do begin
+    h=headfits(lstot[i])
+    if strcmp(strtrim(sxpar(h,'OBSTYPE'),2),'BIAS') then begin
+      if sxpar(h,'RDNOISEA') eq 4.2 then begin
+        if lbiasNr eq !NULL then lbiasNr=lstot[i] else lbiasNr=[lbiasNr,lstot[i]]
+      endif else if lbiasSr eq !NULL then lbiasSr=lstot[i] else lbiasSr=[lbiasSr,lstot[i]]
+    endif else begin
+      if strcmp(sxpar(h,'GSLIPOS'),'FOURSLICE') then begin
+        case strtrim(sxpar(h,'OBSTYPE'),2) of
+          'FLAT': if lflat1f eq !NULL then lflat1f=lstot[i] else lflat1f=[lflat1f,lstot[i]]
+          'ARC': if lthar1f eq !NULL then lthar1f=lstot[i] else lthar1f=[lthar1f,lstot[i]]
+          'OBJECT': if lsci1f eq !NULL then lsci1f=lstot[i] else lsci1f=[lsci1f,lstot[i]]
+        endcase
+      endif else begin
+        case strtrim(sxpar(h,'OBSTYPE'),2) of
+          'FLAT': if lflat2f eq !NULL then lflat2f=lstot[i] else lflat2f=[lflat2f,lstot[i]]
+          'ARC': if lthar2f eq !NULL then lthar2f=lstot[i] else lthar2f=[lthar2f,lstot[i]]
+          'OBJECT': if lsci2f eq !NULL then lsci2f=lstot[i] else lsci2f=[lsci2f,lstot[i]]
+        endcase
+      endelse
+    endelse
+  endfor
+
+
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;  BIAS FRAMES CREATION
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ;Takes the user's list of bias, if provided
+  if keyword_set(lbias) then begin
+    readcol,lbias,format='(a)',lbias
+    h=headfits(lbias[0])
+    if sxpar(h,'RDNOISEA') eq 4.2 then lbiasNr=lbias else lbiasSr=lbias
+  endif
+
+  ;checks if there was any bias observed in Normal readout mode.
+  if lbiasNr ne !NULL then begin
+    ;gets the date from the header of the first bias
+    hb=headfits(lbiasNr[0])
+    date=sxpar(hb,'DATE')
+    biasdate=strmid(date,0,4)+strmid(date,5,2)+strmid(date,8,2)
+
+    ;checks first if the Master has not been created before
+    if file_test(reddir+'BiasNormal'+biasdate+'.fits') and keyword_set(new) ne 1 then begin
+      ;if a Master Bias has already been processed, it takes this one.
+      biasNr=readfits(reddir+'BiasNormal'+biasdate+'.fits',/silent)
+    endif else begin
+      ;IMPORTANT NOTE: No rejection method used at this point!
+      for i=0,n_elements(lbiasNr)-1 do begin
+        im=readfits(lbiasNr[i],/silent)
+        im_overs=overs_corr(im,overs)
+        if i eq 0 then biasNr=im_overs/n_elements(lbiasNr) else biasNr=biasNr+im_overs/n_elements(lbiasNr)
+      endfor
+      writefits,reddir+'BiasNormal'+biasdate+'.fits',biasNr;,hb
+    endelse
+  endif
+  ;checks if there was any bias observed in Slow readout mode.
+  if lbiasSr ne !NULL then begin
+    ;gets the date from the header of the first bias
+    hb=headfits(lbiasSr[0])
+    date=sxpar(hb,'DATE')
+    biasdate=strmid(date,0,4)+strmid(date,5,2)+strmid(date,8,2)
+
+    ;checks first if the Master has not been created before
+    if file_test(reddir+'BiasSlow'+biasdate+'.fits') and keyword_set(new) ne 1 then begin
+      ;if a Master Bias has already been processed, it takes this one.
+      biasSr=readfits(reddir+'BiasSlow'+biasdate+'.fits',/silent)
+    endif else begin
+      ;IMPORTANT NOTE: No rejection method used at this point!
+      for i=0,n_elements(lbiasSr)-1 do begin
+        im=readfits(lbiasSr[i],/silent)
+        im_overs=overs_corr(im,overs)
+        if i eq 0 then biasSr=im_overs/n_elements(lbiasSr) else biasSr=biasSr+im_overs/n_elements(lbiasSr)
+      endfor
+      writefits,reddir+'BiasSlow'+biasdate+'.fits',biasSr;,hb
+    endelse
+  endif
+  ;cuts the program short if no bias is available
+  if lbiasNr eq !NULL and lbiasSr eq !NULL then begin
+    print,''
+    print,'ERROR: Could not find any Bias frame'
+    goto,fin
+  endif
+
+
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;  ThAr FRAMES CREATION
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ;Takes the user's list of ThAr, if provided
+  if keyword_set(lthar) then begin
+    readcol,lthar,format='(a)',lthar
+    h=headfits(lthar[0])
+    if strcmp(sxpar(h,'GSLIPOS'),'FOURSLICE') then lthar1f=lthar else lthar2f=lthar
+  endif
+
+  ;checks if there was any ThAr observed in 1-fiber mode.
+  if lthar1f ne !NULL then begin
+    ;gets the date from the header of the first ThAr
+    ht=headfits(lthar1f[0])
+    date=sxpar(ht,'DATE')
+    thar1fdate=strmid(date,0,4)+strmid(date,5,2)+strmid(date,8,2)
+
+    ;checks first if the Master has not been created before
+    if file_test(reddir+'ThAr1f'+thar1fdate+'.fits') and keyword_set(new) ne 1 then begin
+      ;if a Master ThAr has already been processed, it takes this one.
+      thar1f=readfits(reddir+'ThAr1f'+thar1fdate+'.fits',/silent)
+    endif else begin
+      ;IMPORTANT NOTE: No rejection method used at this point!
+      for i=0,n_elements(lthar1f)-1 do begin
+        im=readfits(lthar1f[i],/silent)
+        im_overs=overs_corr(im,overs)
+        if i eq 0 then thar1f=im_overs/n_elements(lthar1f) else thar1f=thar1f+im_overs/n_elements(lthar1f)
+      endfor
+      thar1f=thar1f-biasNr
+      writefits,reddir+'ThAr1f'+thar1fdate+'.fits',thar1f;,ht
+    endelse
+  endif
+  ;checks if there was any ThAr observed in 2-fiber mode.
+  if lthar2f ne !NULL then begin
+    ;gets the date from the header of the first ThAr
+    ht=headfits(lthar2f[0])
+    date=sxpar(ht,'DATE')
+    thar2fdate=strmid(date,0,4)+strmid(date,5,2)+strmid(date,8,2)
+
+    ;checks first if the Master has not been created before
+    if file_test(reddir+'ThAr2f'+thar2fdate+'.fits') and keyword_set(new) ne 1 then begin
+      ;if a Master ThAr has already been processed, it takes this one.
+      thar2f=readfits(reddir+'ThAr2f'+thar2fdate+'.fits',/silent)
+    endif else begin
+      ;IMPORTANT NOTE: No rejection method used at this point!
+      for i=0,n_elements(lthar2f)-1 do begin
+        im=readfits(lthar2f[i],/silent)
+        im_overs=overs_corr(im,overs)
+        if i eq 0 then thar2f=im_overs/n_elements(lthar2f) else thar2f=thar2f+im_overs/n_elements(lthar2f)
+      endfor
+      thar2f=thar2f-biasNr
+      writefits,reddir+'ThAr2f'+thar2fdate+'.fits',thar2f;,ht
+    endelse
+  endif
+  ;cuts the program short if no bias is available
+  if lthar1f eq !NULL and lthar2f eq !NULL then begin
+    print,''
+    print,'ERROR: Could not find any ThAr spectrum'
+    goto,fin
+  endif
+
+
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;  FLAT FRAMES CREATION
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ;Takes the user's list of flats, if provided
+  if keyword_set(lflat) then begin
+    readcol,lflat,format='(a)',lflat
+    h=headfits(lflat[0])
+    if strcmp(sxpar(h,'GSLIPOS'),'FOURSLICE') then lflat1f=lflat else lflat2f=lflat
+  endif
+
+  ;checks if there was any Flat observed in 1-fiber mode.
+  if lflat1f ne !NULL then begin
+    ;gets the date from the header of the first flat
+    hf=headfits(lflat1f[0])
+    date=sxpar(hf,'DATE')
+    flat1fdate=strmid(date,0,4)+strmid(date,5,2)+strmid(date,8,2)
+
+    ;checks first if the Master has not been created before
+    if file_test(reddir+'Flat1f'+flat1fdate+'.fits') and keyword_set(new) ne 1 then begin
+      ;if a Master Flat has already been processed, it takes this one.
+      flat1f=readfits(reddir+'Flat1f'+flat1fdate+'.fits',/silent)
+    endif else begin
+      ;IMPORTANT NOTE: No rejection method used at this point!
+      for i=0,n_elements(lflat1f)-1 do begin
+        im=readfits(lflat1f[i],/silent)
+        im_overs=overs_corr(im,overs)
+        if i eq 0 then flat1f=im_overs/n_elements(lflat1f) else flat1f=flat1f+im_overs/n_elements(lflat1f)
+      endfor
+      flat1f=flat1f-biasNr
+      writefits,reddir+'Flat1f'+flat1fdate+'.fits',flat1f;,hf
+    endelse
+  endif
+  ;checks if there was any Flat observed in 2-fiber mode.
+  if lflat2f ne !NULL then begin
+    ;gets the date from the header of the first flat
+    ht=headfits(lflat2f[0])
+    date=sxpar(ht,'DATE')
+    flat2fdate=strmid(date,0,4)+strmid(date,5,2)+strmid(date,8,2)
+
+    ;checks first if the Master has not been created before
+    if file_test(reddir+'Flat2f'+flat2fdate+'.fits') and keyword_set(new) ne 1 then begin
+      ;if a Master Flat has already been processed, it takes this one.
+      flat2f=readfits(reddir+'Flat2f'+flat2fdate+'.fits',/silent)
+    endif else begin
+      ;IMPORTANT NOTE: No rejection method used at this point!
+      for i=0,n_elements(lflat2f)-1 do begin
+        im=readfits(lflat2f[i],/silent)
+        im_overs=overs_corr(im,overs)
+        if i eq 0 then flat2f=im_overs/n_elements(lflat2f) else flat2f=flat2f+im_overs/n_elements(lflat2f)
+      endfor
+      flat2f=flat2f-biasNr
+      writefits,reddir+'Flat2f'+flat2fdate+'.fits',flat2f;,hf
+    endelse
+  endif
+  ;cuts the program short if no bias is available
+  if lflat1f eq !NULL and lflat2f eq !NULL then begin
+    print,''
+    print,'ERROR: Could not find any Flat spectrum'
+    goto,fin
+  endif
+
+
+
+  ;Loops on the 2 possible spectral modes
+  for idx=1,2 do begin
+    case idx of
+      ;sets-up parameters for the 1-fiber mode
+      1: begin
+        if lflat1f ne !NULL and lthar1f ne !NULL then begin
+          spmd='1f'
+          lflat=lflat1f
+          lthar=lthar1f
+          lsci=lsci1f
+          flat=flat1f
+          thar=thar1f
+          flatdate=flat1fdate
+          thardate=thar1fdate
+          ts=ts1f
+          wdt=wdt1f
+          resel=resel1f
+        endif else begin
+          print,''
+          if lsci1f ne !NULL then print,'ERROR: missing calibrations for the 1-fiber mode'
+          goto,skip_loop
+        endelse
+      end
+      ;sets-up parameters for the 2-fiber mode
+      2: begin
+        if lflat2f ne !NULL and lthar2f ne !NULL then begin
+          spmd='2f'
+          lflat=lflat2f
+          lthar=lthar2f
+          lsci=lsci2f
+          flat=flat2f
+          thar=thar2f
+          flatdate=flat2fdate
+          thardate=thar2fdate
+          ts=ts2f
+          wdt=wdt2f
+          resel=resel2f
+        endif else begin
+          print,''
+          if lsci2f ne !NULL then print,'ERROR: missing calibrations for the 2-fiber mode'
+          goto,fin
+        endelse
+      end
+    endcase
+    if strcmp(flatdate,thardate) ne 1 then begin
+      print,''
+      print,'WARNING!!! The flatfield image and the ThAr spectrum are not from the same date.'
+      print,'           The real geometry on the 2D spectra may not correspond to the correcion applied.'
+      print,''
+    endif
+
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;  FINDING THE TRACES
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    ;Relies on the function "find_trace"
+    if lflat ne !NULL then begin
+      if file_test(reddir+'TraceCoeff_'+spmd+flatdate+'.dat') ne 1 or keyword_set(new) eq 1 then begin
+        ;calls find_trace
+        matcoeff=find_trace(flat,spmd,ts,wdt,vcen,nco)
+        ;records the result, so we do not need to recalculate it next time we reduce spectra from the same date
+        openw,lun,reddir+'TraceCoeff_'+spmd+flatdate+'.dat',/get_lun  ;the traces (x-position) are recorded here
+        for i=0,nord-1 do begin
+          temp=''
+          for j=0,nco do temp=temp+strtrim(string(double(matcoeff[j,i])),2)+' '
+          printf,lun,format='(a)',temp
+        endfor
+        close,lun
+        free_lun,lun
+      endif else begin
+        ;reads the values if it has already been calculated
+        openr,lun,reddir+'TraceCoeff_'+spmd+flatdate+'.dat',/get_lun
+        matcoeff=dblarr(nco+1,nord)
+        readf,lun,matcoeff
+        close,lun
+        free_lun,lun
+      endelse
+    endif
+
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; FINDING THE SLIT TILT
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    ;Relies on the function "find_lines"
+    if file_test(reddir+'Tilt_'+spmd+thardate+'.dat') ne 1 or keyword_set(new) eq 1 then begin
+      ;reduces the ThAr frame, without applying a tilt
+      tilt_2d=reduce(thar,matcoeff,wdt,mask=nonlin,/notilt)
+      ;extracts the ThAr frame, so we can find the lines
+      tilt_1d=extract(tilt_2d,wdt,spmd)
+      ;calls find_lines
+      slit_tilt=find_lines(tilt_1d,tilt_2d,spmd,wdt,resel,nonlin,/find_tilt)
+
+      ;records the result, so we do not need to recalculate it next time we reduce spectra from the same date
+      openw,lun,reddir+'Tilt_'+spmd+thardate+'.dat',/get_lun  ;the tilts are recorded here
+      for i=0,nord-1 do begin
+        temp=[strtrim(string(double(slit_tilt[0,i])),2),strtrim(string(double(slit_tilt[1,i])),2)]
+        printf,lun,format='(a,a,a)',temp[0],'  ',temp[1]
+      endfor
+      close,lun
+      free_lun,lun
+    endif else begin
+      ;reads the values if it has already been calculated
+      openr,lun,reddir+'Tilt_'+spmd+thardate+'.dat',/get_lun
+      slit_tilt=fltarr(2,nord)
+      readf,lun,slit_tilt
+      close,lun
+      free_lun,lun
+    endelse
+
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; REDUCTION OF CALIBRATIONS
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    wdt=wdt-1 ;the width is reduced by one pixel at this point; easier for reduction
+
+    ;runs reduce on the ThAr wih the aim to produce an .eps figure showing where the
+    ;  traces are extracted, ans with which slit tilt.
+    junk=reduce(thar,matcoeff,wdt,slit_tilt,mask=nonlin,disp=spmd+thardate,dir=reddir)
+
+    ;Gets the normalized flat field
+    flatN=reduce(flat,matcoeff,wdt,slit_tilt,mask=nonlin,/normal)
+    writefits,reddir+'FlatNorm'+spmd+flatdate+'.fits',flatN;,hf
+
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; LINE IDENTIFICATION
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;Extracts the ThAr spectrum for final line identification
+    wavel2d=reduce(thar,matcoeff,wdt,slit_tilt)
+    wavel2d=wavel2d/flatN
+    wavel_sp=extract(wavel2d,wdt,spmd)
+    if keyword_set(skip_wavel) then begin
+      ;Saves the extracted ThAr spectrum
+      s=size(wavel_sp)
+      fits_open,reddir+'red_ThAr_sp'+thardate+spmd+'.fits',un,/write
+      for i=0,nord-1 do begin
+        spectrum=total(wavel_sp[i,*],1)
+        mkhdr,h,spectrum,/image
+        sxaddpar,h,'NAXIS',1
+        sxaddpar,h,'NAXIS1',s[2]
+        sxdelpar,h,'NAXIS2'
+        fits_write,un,spectrum,h,extname='order '+strtrim(string(i+first_order),2),extver=i+1
+      endfor
+      fits_close,un
+    endif else begin
+      ;Finds the pix position of strongest lines
+      line_list=find_lines(wavel_sp,wavel2d,spmd,wdt,resel,nonlin)
+      wavel_sol_per_order=wavel_sol(line_list,spmd,vec_lines_used=vec_lines_used)
+      ;displays the identified lines in a multiple pages .ps file.
+      ; note that most of the follow variables are tuned to give acceptable plots.
+      set_plot,'ps'
+      device,filename=reddir+'Identification'+spmd+thardate+'.ps',/color;,/landscape
+      pos=where(vec_lines_used[0,*] eq -1)
+      for i=0,nord-1 do begin
+        if i mod 5 eq 0 then begin
+          multiplot,/default
+          multiplot,[1,5],ygap=.01
+        endif
+        spectrum=wavel_sp[i,*]
+        pix_pos=vec_lines_used[0,pos[i]+1:pos[i+1]-1]
+        wav_pos=vec_lines_used[1,pos[i]+1:pos[i+1]-1]
+        ylable=spectrum[pix_pos]
+        posy=where(ylable gt 8000)
+        if max(posy) ne -1 then ylable[posy]=8000
+        if (i+1) mod 5 eq 0 then xttl='pixels' else xttl=''
+        plot,spectrum,yrange=[0,10000],xtitle=xttl,ytitle='ADU',title='Order '+strtrim(string(i+first_order),2),/xst,xrange=[0,4300]
+        plotsym,1
+        oplot,pix_pos,ylable,psym=8,color=255
+        for j=0,pos[i+1]-pos[i]-2 do xyouts,pix_pos[j]+5,ylable[j]+20,strtrim(string(wav_pos[j]),2),color=255,orientation=90,charsize=0.7
+        multiplot
+        if (i+1) mod 5 eq 0 then erase
+      endfor
+      multiplot,/reset
+      device,/close
+      set_plot,'x'
+    endelse
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; EXTRACTION
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    ;LOOP ON SCIENCE FRAMES
+    for j=0,n_elements(lsci)-1 do begin
+      ;reads the science frame
+      im=readfits(lsci[j],h,/silent)
+      ;picks the right bias
+      if sxpar(h,'RDNOISEA') eq 4.2 then bias_i=biasNr else bias_i=biasSr
+      ;corrects for the bias level using the overscan
+      im=overs_corr(im,overs)
+      ;corrects for the bias structure (usually pretty flat) using the bias frame
+      im=im-bias_i
+      ;reduces the 2d spectrum
+      sci2d=reduce(im,matcoeff,wdt,slit_tilt)
+      ;corrects for the flat field
+      sci2d=sci2d/flatN
+      ;extracts the spectrum
+      sci=extract(sci2d,wdt,spmd)
+
+      s=size(im)
+      ;would save the extracted spectrum if the wavelength calibration is skipped
+      if keyword_set(skip_wavel) then begin
+        fits_open,reddir+'red_'+strmid(lsci[j],strlen(datadir)),un,/write
+        ;would calibrate for the wavelength and save the final spectrum
+      endif else begin
+        final=wavel_cal(sci,wavel_sol_per_order,param=param)
+        fits_open,reddir+'ext_'+strmid(lsci[j],strlen(datadir)),un,/write
+      endelse
+      for i=0,nord*idx-1 do begin
+        ;if the spectrum is NOT calibrated
+        if keyword_set(skip_wavel) then begin
+          spectrum=total(sci[i,*],1)
+          mkhdr,h,spectrum,/image
+          sxaddpar,h,'NAXIS',1
+          sxaddpar,h,'NAXIS1',s[2]
+          sxdelpar,h,'NAXIS2'
+          ;if the spectrum is calibrated
+        endif else begin
+          spectrum=total(final[i,*],1)
+          mkhdr,h,spectrum,/image
+          sxaddpar,h,'NAXIS',1
+          sxaddpar,h,'NAXIS1',s[2]
+          sxdelpar,h,'NAXIS2'
+          sxaddpar,h,'CTYPE1','WAVE-WAV-PLY'
+          sxaddpar,h,'CUNIT1','Angstrom'
+          sxaddpar,h,'DC-FLAG',0
+          sxaddpar,h,'CRPIX1',1
+          sxaddpar,h,'CRVAL1',param[0,i]
+          sxaddpar,h,'CD1_1',param[1,i]
+        endelse
+        fits_write,un,spectrum,h,extname='order '+strtrim(string(i+first_order),2),extver=i+1
+      endfor
+      fits_close,un
+    endfor
+
+    skip_loop:
+  endfor
+
+  fin:
+end
+
+
 
 
