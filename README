@@ -42,9 +42,8 @@ HOW TO RUN IT
    to the same diectory. Make sure no other files from other nights are in the
    same directory. (There are ways to handle data from multiple nights, but they
    are not fully tested yet; see below the optional inputs.)
-2. Run IDL and compile "dg.pro" TWICE:
-       IDL> .r dg    ;-> will spit lots of errors due to the functions
-       IDL> .r dg    ;-> will compile everything happily
+2. Run IDL and compile "dg.pro":
+       IDL> .r dg
 3. Type "dg". If the pipeline is in the same directory as the data, you do not 
    need to provide any input. If it is not, use the optional input "dir" to give
    the path to the data. E.g.:
