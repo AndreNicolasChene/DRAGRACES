@@ -59,7 +59,7 @@ for k=0,nord-1 do begin
   res=gaussfit(lag,cc-min(cc),co,nterms=3) ;gaussian fit to the CC profile
   vcen[k]=vcen[k]-co[1]                    ;correction of the centroid
 endfor
-  
+
 ;;;;;;;;;;;;;;;;
 ;Starting from the center, this loop does a CC at each row (first going down, then going up) to find the trace for each order
 vy=findgen(len)  ;vector of the y-pixel position (from 0 to length-Y)
@@ -385,6 +385,71 @@ end
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;  FUNCTION TO CORRECT FOR ILLUMIATION
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;This sction is currently not commented.
+function illumcorr,im,sp2d,matcoeff,wdt,slit_tilt
+  s=size(matcoeff)
+  nord=s[2] ;number of orders
+  s=size(im)
+  illum=fltarr(s[1],s[2])
+
+  for i=0,s[2]-1 do begin
+    illum_i=im[*,i]
+    for k=0,nord-1 do begin
+      if k eq 0 then begin
+        res=matcoeff[*,k]
+        pos_center=0.
+        for j=0,n_elements(res)-1 do pos_center=pos_center+res[j]*double(i)^j
+        
+        p1l=fix(pos_center-wdt/2)-2 
+      endif else begin
+        pos_centerM1=pos_center
+        pos_center=pos_centerP1
+        
+        p1l=round(pos_centerM1+wdt/2+.5)
+      endelse
+      if k ne nord-1 then begin
+        res=matcoeff[*,k+1]
+        pos_centerP1=0.
+        for j=0,n_elements(res)-1 do pos_centerP1=pos_centerP1+res[j]*double(i)^j
+        
+        p2r=fix(pos_centerP1-wdt/2)
+      endif else p2r=n_elements(illum_i)-1
+      
+      p2l=fix(pos_center-wdt/2)
+      p1r=round(pos_center+wdt/2+.5)
+      if p1l gt p2l then begin
+        junk=p1l
+        p1l=p2l
+        p2l=junk
+      endif
+      if p1r gt p2r then begin
+        junk=p1r
+        p1r=p2r
+        p2r=junk
+      endif
+      xfit=dindgen(p1r-p2l+1)+p2l
+      xbase=[findgen(p2l-p1l+1)+p1l,findgen(p2r-p1r+1)+p1r]
+      ybase=[illum_i[p1l:p2l],illum_i[p1r:p2r]]
+      if n_elements(xbase) gt 15 then order=3 else if n_elements(xbase) gt 10 then order=2 else order=1
+      coef=robust_poly_fit(xbase,ybase,order)
+      yfit=fltarr(n_elements(xfit))
+      for j=0,order do yfit=yfit+coef[j]*xfit^j
+      illum_i[p2l:p1r]=yfit
+    endfor
+    illum[*,i]=illum_i
+  endfor
+  
+  illum2d=reduce(illum,matcoeff,wdt,slit_tilt)
+  for i=0,nord-1 do illum2d[i*wdt:i*wdt+wdt-1,*]=sfit(illum2d[i*wdt:i*wdt+wdt-1,*],5)
+  
+  return,sp2d-illum2d
+end
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;  FUNCTION WHERE THE SPECTRUM IS EXTRACTED
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 function extract,sp2d,wdt,spmd
@@ -643,20 +708,20 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
     print,'    dg[,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,/skip_wavel,/ascii_file,/new,/help]'
     print,'    '
     print,'INPUTS (all optional):'
-    print,'       dir - Path to where the data can be found. A new directory named ""Reduction"" will'
-    print,'             be created, if it does not already exist.'
-    print,'    utdate - Date when the spectra where observed. The format is YYYYMMDD, and can be'
-    print,'             given as a number (without ''''). If it not provided, it is expected that the'
-    print,'             data in the directory pointed by the input ""dir"" are all from the same date. '
-    print,'     lbias - Name of a file where the bias frames are listed.'
-    print,'     lflat - Name of a file where the flats frames are listed.'
-    print,'     lthar - Name of a file where the ThAr frames are listed.'
-    print,'skip_wavel - When provided, the wavelength solution is not calculated.'
-    print,'ascii_file - (NOT YET WORKING)'
-    print,'       new - Forces DRAGRACES to recalculate all the calibrations instead of using those'
-    print,'             obtained in a previous run of the pipeline'
-    print,'      logo - Displays the DRAGRACES logo when you run the pipeline!'
-    print,'      help - Displays this help summary.'
+    print,'        dir - Path to where the data can be found. A new directory named ""Reduction"" will'
+    print,'              be created, if it does not already exist.'
+    print,'     utdate - Date when the spectra where observed. The format is YYYYMMDD, and can be'
+    print,'              given as a number (without ''''). If it not provided, it is expected that the'
+    print,'              data in the directory pointed by the input ""dir"" are all from the same date. '
+    print,'      lbias - Name of a file where the bias frames are listed.'
+    print,'      lflat - Name of a file where the flats frames are listed.'
+    print,'      lthar - Name of a file where the ThAr frames are listed.'
+    print,' skip_wavel - When provided, the wavelength solution is not calculated.'
+    print,' ascii_file - (NOT YET WORKING)'
+    print,'        new - Forces DRAGRACES to recalculate all the calibrations instead of using those'
+    print,'              obtained in a previous run of the pipeline'
+    print,'       logo - Displays the DRAGRACES logo when you run the pipeline!'
+    print,'       help - Displays this help summary.'
     print,'OUTPUTS:'
     print,'    The program saves the extracted spectra in the fits format, in the directory ""Reduction"".'
     print,'    If the wavelength solution was calculated, the filenames start with ""ext_"". If not, '
@@ -1171,6 +1236,8 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
       im=im-bias_i
       ;reduces the 2d spectrum
       sci2d=reduce(im,matcoeff,wdt,slit_tilt)
+      ;corrects the illumination
+      sci2d=illumcorr(im,sci2d,matcoeff,wdt,slit_tilt)
       ;corrects for the flat field
       sci2d=sci2d/flatN
       ;extracts the spectrum
