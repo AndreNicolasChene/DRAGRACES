@@ -1274,7 +1274,8 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
           sxaddpar,h,'CRVAL1',param[0,i]
           sxaddpar,h,'CD1_1',param[1,i]
         endelse
-        fits_write,un,spectrum,h,extname='order '+strtrim(string(i+first_order),2),extver=i+1
+        if spmd eq 1 then ordname=strtrim(string(i+first_order),2) else ordname=strtrim(string(i/2+first_order),2)
+        fits_write,un,spectrum,h,extname='order '+ordname,extver=i+1
       endfor
       fits_close,un
     endfor
