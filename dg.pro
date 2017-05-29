@@ -395,30 +395,38 @@ function illumcorr,im,sp2d,matcoeff,wdt,slit_tilt
   illum=fltarr(s[1],s[2])
 
   for i=0,s[2]-1 do begin
+    ;Uses the cut of the image at each row to determine the scattered light (illumination)
     illum_i=im[*,i]
     for k=0,nord-1 do begin
       if k eq 0 then begin
         res=matcoeff[*,k]
-        pos_center=0.
+        pos_center=0. ;center of the first order (22)
         for j=0,n_elements(res)-1 do pos_center=pos_center+res[j]*double(i)^j
         
-        p1l=fix(pos_center-wdt/2)-2 
-      endif else begin
-        pos_centerM1=pos_center
-        pos_center=pos_centerP1
+        p1l=fix(pos_center-wdt/2)-2 ;lowest point in x of the left side of the order 
         
-        p1l=round(pos_centerM1+wdt/2+.5)
+        ;for the spline fit of the tight_orders first orders (see below)
+        tight_orders=8
+        p0=p1l
+        sample_x=fltarr(nord+1)
+        sample_y=fltarr(nord+1)
+      endif else begin
+        pos_centerM1=pos_center ;takes center of the previous order
+        pos_center=pos_centerP1 ;takes the center of the current order (calculated in the previous loop)
+        
+        p1l=round(pos_centerM1+wdt/2+.5) ;lowest point in x of the left side of the order
       endelse
       if k ne nord-1 then begin
         res=matcoeff[*,k+1]
         pos_centerP1=0.
-        for j=0,n_elements(res)-1 do pos_centerP1=pos_centerP1+res[j]*double(i)^j
+        for j=0,n_elements(res)-1 do pos_centerP1=pos_centerP1+res[j]*double(i)^j ;center of the next order (used as current next loop)
         
-        p2r=fix(pos_centerP1-wdt/2)
-      endif else p2r=n_elements(illum_i)-1
+        p2r=fix(pos_centerP1-wdt/2) ;the highest point in x of the right side of the order
+      endif else p2r=n_elements(illum_i)-1 ;the highest point in x of the right side of the order
       
-      p2l=fix(pos_center-wdt/2)
-      p1r=round(pos_center+wdt/2+.5)
+      p2l=fix(pos_center-wdt/2) ;the highest point in x of the left side of the order
+      p1r=round(pos_center+wdt/2+.5) ;the lowest point in x of the right side of the order
+      ;flips the points if they are inverted (happens if the order are really close)
       if p1l gt p2l then begin
         junk=p1l
         p1l=p2l
@@ -429,21 +437,34 @@ function illumcorr,im,sp2d,matcoeff,wdt,slit_tilt
         p1r=p2r
         p2r=junk
       endif
-      xfit=dindgen(p1r-p2l+1)+p2l
-      xbase=[findgen(p2l-p1l+1)+p1l,findgen(p2r-p1r+1)+p1r]
-      ybase=[illum_i[p1l:p2l],illum_i[p1r:p2r]]
-      if n_elements(xbase) gt 15 then order=3 else if n_elements(xbase) gt 10 then order=2 else order=1
-      coef=robust_poly_fit(xbase,ybase,order)
-      yfit=fltarr(n_elements(xfit))
-      for j=0,order do yfit=yfit+coef[j]*xfit^j
-      illum_i[p2l:p1r]=yfit
+      if k le tight_orders-1 then begin
+        ;smoothens in y by taking min of all values within 2xnbin pixels
+        nbin=20
+        smth_y_low=i-nbin
+        smth_y_high=i+nbin
+        if smth_y_low lt 0 then smth_y_low=0
+        if smth_y_high ge s[2] then smth_y_high=s[2]-1
+        junk=min(illum_i[p1l-wdt/4.:p2l+wdt/4.],pos)
+        pos=pos-wdt/4.
+        sample_y[k]=min(im[p1l-wdt/4.:p2l+wdt/4.,smth_y_low:smth_y_high]) ;illumination value
+        sample_x[k]=p1l+pos ;x position of the illumination value
+      endif else begin
+        sample_y[k]=median(im[p1l:p2l,i]) ;illumination value
+        sample_x[k]=(p1l+p2l)/2. ;x position of the illumination value
+        if k eq nord-1 then begin
+          sample_y[k+1]=median(im[p1r:p2r,i]) ;illumination value
+          sample_x[k+1]=(p1r+p2r)/2. ;x position of the illumination value
+          xint=findgen(p2r-p0+1)+p0
+          yint=spline(sample_x,sample_y,xint,1.0)
+          illum_i[p0:p2r]=yint
+        endif
+      endelse
     endfor
     illum[*,i]=illum_i
   endfor
   
   illum2d=reduce(illum,matcoeff,wdt,slit_tilt)
   for i=0,nord-1 do illum2d[i*wdt:i*wdt+wdt-1,*]=sfit(illum2d[i*wdt:i*wdt+wdt-1,*],5)
-  
   return,sp2d-illum2d
 end
 
@@ -727,9 +748,16 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
     print,'    If the wavelength solution was calculated, the filenames start with ""ext_"". If not, '
     print,'    the filenames start with ""red_"", and an additional ""red_Thar_..." spectrum is provided.'
     print,''
+    print,'PREREQUISITES:'
+    print,'    - IDL (only tested under IDL 8+)'
+    print,'    - Astrolib (http://idlastro.gsfc.nasa.gov/ftp/)'
+    print,'    - imdisp.pro (https://www.idlcoyote.com/programs/coyoteplus/imdisp.pro)'
+    print,'         . if you do no want imdisp, simply comment line 955'
+    print,'    note1: make sure that Astrolib and imdisp are copied into your IDL libraries'
+    print,''
     print,'IMPORTANT NOTE:'
     print,''
-    print,'    The pipeline expets the files to be ""well behaved"". It expects all the files in a given'
+    print,'    The pipeline expects the files to be ""well behaved"". It expects all the files in a given'
     print,'    folder to be relevant to the extraction. If calibrations data of different nigts are in the'
     print,'    same folder, they will be blended and potentially wrong. Unless you use the file list'
     print,'    option, but they have not been fully tested yet. Visit www.gemini.edu/node/12552 for more'
