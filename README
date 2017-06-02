@@ -17,7 +17,7 @@ PREREQUISITES:
  - imdisp.pro (https://www.idlcoyote.com/programs/coyoteplus/imdisp.pro)
      . if you do no want imdisp, simply comment line 955
  note1: make sure that Astrolib and imdisp are copied into your IDL libraries
- note2: a future release will also contain an executable that can be ran with
+ note2: a future release will also contain an executable that can be ran without
         an IDL licence!
 
 ______________________________________________________________________________

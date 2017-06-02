@@ -387,84 +387,93 @@ end
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;  FUNCTION TO CORRECT FOR ILLUMIATION
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;This sction is currently not commented.
 function illumcorr,im,sp2d,matcoeff,wdt,slit_tilt
   s=size(matcoeff)
   nord=s[2] ;number of orders
   s=size(im)
-  illum=fltarr(s[1],s[2])
-
+  illum=fltarr(s[1],s[2]) ;Final 2D illumination (background)
+  bckg_x=fltarr(nord+1,s[2]) ;pixels where the background level is measeured
+  bckg_y=fltarr(nord+1,s[2]) ;background level at each order
+  vp0=fltarr(s[2]) ;position at the start of the first order at each row
+  
   for i=0,s[2]-1 do begin
     ;Uses the cut of the image at each row to determine the scattered light (illumination)
     illum_i=im[*,i]
     for k=0,nord-1 do begin
       if k eq 0 then begin
-        res=matcoeff[*,k]
+        ;points x and y where the background is measure for the current row
+        sample_x=fltarr(nord+1)
+        sample_y=fltarr(nord+1)
+        
+        res=matcoeff[*,0]
         pos_center=0. ;center of the first order (22)
         for j=0,n_elements(res)-1 do pos_center=pos_center+res[j]*double(i)^j
         
-        p1l=fix(pos_center-wdt/2)-2 ;lowest point in x of the left side of the order 
-        
-        ;for the spline fit of the tight_orders first orders (see below)
-        tight_orders=8
-        p0=p1l
-        sample_x=fltarr(nord+1)
-        sample_y=fltarr(nord+1)
+        p1l=round(pos_center-wdt/2-2) ;lowest point in x of the left side of the order
+        vp0[i]=p1l
       endif else begin
-        pos_centerM1=pos_center ;takes center of the previous order
-        pos_center=pos_centerP1 ;takes the center of the current order (calculated in the previous loop)
+        p1l=round(pos_center+wdt/2+.5) ;lowest point in x of the left side of the order
         
-        p1l=round(pos_centerM1+wdt/2+.5) ;lowest point in x of the left side of the order
+        res=matcoeff[*,k]
+        pos_center=0. ;center of the current order
+        for j=0,n_elements(res)-1 do pos_center=pos_center+res[j]*double(i)^j
       endelse
-      if k ne nord-1 then begin
-        res=matcoeff[*,k+1]
-        pos_centerP1=0.
-        for j=0,n_elements(res)-1 do pos_centerP1=pos_centerP1+res[j]*double(i)^j ;center of the next order (used as current next loop)
-        
-        p2r=fix(pos_centerP1-wdt/2) ;the highest point in x of the right side of the order
-      endif else p2r=n_elements(illum_i)-1 ;the highest point in x of the right side of the order
+      if k eq nord-1 then begin
+        p1r=round(pos_center+wdt/2+.5) ;the lowest point in x of the right side of the order
+        p2r=n_elements(illum_i)-1 ;the highest point in x of the right side of the order
+      endif
       
       p2l=fix(pos_center-wdt/2) ;the highest point in x of the left side of the order
-      p1r=round(pos_center+wdt/2+.5) ;the lowest point in x of the right side of the order
       ;flips the points if they are inverted (happens if the order are really close)
       if p1l gt p2l then begin
         junk=p1l
         p1l=p2l
         p2l=junk
       endif
-      if p1r gt p2r then begin
-        junk=p1r
-        p1r=p2r
-        p2r=junk
+
+      if p2l-p1l gt 3 then begin
+        res=poly_fit(findgen(p2l-p1l+1),illum_i[p1l:p2l],3,yfit=yfit)
+        sample_y[k]=min(yfit) ;illumination value
+      endif else sample_y[k]=min(illum_i[p1l:p2l]) ;illumination value
+      sample_x[k]=(p1l+p2l)/2. ;x position of the illumination value
+      if k eq nord-1 then begin
+        sample_y[k+1]=median(illum_i[p1r:p2r]) ;illumination value
+        sample_x[k+1]=(p1r+p2r)/2. ;x position of the illumination value
+        bckg_x[*,i]=sample_x
+        bckg_y[*,i]=sample_y
       endif
-      if k le tight_orders-1 then begin
-        ;smoothens in y by taking min of all values within 2xnbin pixels
-        nbin=20
-        smth_y_low=i-nbin
-        smth_y_high=i+nbin
-        if smth_y_low lt 0 then smth_y_low=0
-        if smth_y_high ge s[2] then smth_y_high=s[2]-1
-        junk=min(illum_i[p1l-wdt/4.:p2l+wdt/4.],pos)
-        pos=pos-wdt/4.
-        sample_y[k]=min(im[p1l-wdt/4.:p2l+wdt/4.,smth_y_low:smth_y_high]) ;illumination value
-        sample_x[k]=p1l+pos ;x position of the illumination value
-      endif else begin
-        sample_y[k]=median(im[p1l:p2l,i]) ;illumination value
-        sample_x[k]=(p1l+p2l)/2. ;x position of the illumination value
-        if k eq nord-1 then begin
-          sample_y[k+1]=median(im[p1r:p2r,i]) ;illumination value
-          sample_x[k+1]=(p1r+p2r)/2. ;x position of the illumination value
-          xint=findgen(p2r-p0+1)+p0
-          yint=spline(sample_x,sample_y,xint,1.0)
-          illum_i[p0:p2r]=yint
-        endif
-      endelse
     endfor
+  endfor
+  ;This loop goes over the image again, but averages the background measured for nbin (40) rows before creating the background frame
+  for i=0,s[2]-1 do begin
+    illum_i=im[*,i]
+    sample_x=fltarr(nord+1)
+    sample_y=fltarr(nord+1)
+    for k=0,nord do begin
+      ;smoothens in y by taking min of all values within 2xnbin pixels
+      nbin=40
+      smth_y_low=i-nbin/2
+      smth_y_high=i+nbin/2
+      if smth_y_low lt 0 then smth_y_low=0
+      if smth_y_high ge s[2] then smth_y_high=s[2]-1
+      
+      sample_y[k]=median(bckg_y[k,smth_y_low:smth_y_high])
+      sample_x[k]=bckg_x[k,i]
+    endfor
+    ;fits the measures for a smoother, and resampled background
+    xint=findgen(s[1]-vp0[i])+vp0[i]
+    res=poly_fit(sample_x,sample_y,6)
+    yint=0
+    for j=0,6 do yint=yint+res[j]*xint^j
+    illum_i[vp0[i]:s[1]-1]=yint
     illum[*,i]=illum_i
   endfor
   
+  ;Creates the 2D background (illumination) frame
   illum2d=reduce(illum,matcoeff,wdt,slit_tilt)
+  ;Fits a 2D surface to each order
   for i=0,nord-1 do illum2d[i*wdt:i*wdt+wdt-1,*]=sfit(illum2d[i*wdt:i*wdt+wdt-1,*],5)
+  ;Returns the corrected 2D frame
   return,sp2d-illum2d
 end
 
@@ -1265,6 +1274,8 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
       ;reduces the 2d spectrum
       sci2d=reduce(im,matcoeff,wdt,slit_tilt)
       ;corrects the illumination
+;toto=reduce(flat,matcoeff,wdt,slit_tilt)
+;toto=illumcorr(flat,toto,matcoeff,wdt,slit_tilt)
       sci2d=illumcorr(im,sci2d,matcoeff,wdt,slit_tilt)
       ;corrects for the flat field
       sci2d=sci2d/flatN
