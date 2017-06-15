@@ -4,11 +4,6 @@
 ; It can be found at the end, as the last pro, after all the functions.
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; still need to improve line fits (line ~366), but quite good now!
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;  FUNCTION APPLYING THE OVERSCAN CORRECTION (nice, but not necessary)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1040,7 +1035,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
   ;checks if there was any Flat observed in 2-fiber mode.
   if lflat2f ne !NULL then begin
     ;gets the date from the header of the first flat
-    ht=headfits(lflat2f[0])
+    hf=headfits(lflat2f[0])
     date=sxpar(ht,'DATE')
     flat2fdate=strmid(date,0,4)+strmid(date,5,2)+strmid(date,8,2)
 
@@ -1115,7 +1110,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
     if strcmp(flatdate,thardate) ne 1 then begin
       print,''
       print,'WARNING!!! The flatfield image and the ThAr spectrum are not from the same date.'
-      print,'           The real geometry on the 2D spectra may not correspond to the correcion applied.'
+      print,'           The real geometry on the 2D spectra may not correspond to the correction applied.'
       print,''
     endif
 
