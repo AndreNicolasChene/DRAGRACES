@@ -210,7 +210,7 @@ coeff_orders=[$
   ]
 
 ;ThAr line list (in Angstrom) from NOAO (iraf.noao.edu/specatlas/thar/thar_list)
-readcol,'ThAr_list.lst',format='(f)',ThAr_list
+readcol,'ThAr_list.lst',format='(f)',ThAr_list,/silent
 
 lineHW=fix(resel*2)+1 ;value of a line half width at half max
 
@@ -325,7 +325,7 @@ for i=0,s[1]-1 do begin
   if keyword_set(find_tilt) then begin
     vec_tilt=-1 ;vector for slit tilt values
     for j=0,n_elements(pos_line_pix)-1 do begin
-      ;samples the 2d ThAr spectrum around the identified potential line
+      ;samples the 2d ThAr spectrum around the identified line
       yb=round(pos_line_pix[j]+lineHW*[-1,1])
       ;makes sure yb does not go outside the image borders
       yb=yb>0
@@ -363,8 +363,19 @@ for i=0,s[1]-1 do begin
     slit_tilt[*,i]=res
   endif else begin
     ;improves the fit to individual lines
-    ;;;;for j=0,n_elements(pos_line_pix)-1 do begin
-    ;;;;endfor
+    for j=0,n_elements(pos_line_pix)-1 do begin
+      ;selects the 1D ThAr spectrum around the identified line
+      yb=round(pos_line_pix[j]+lineHW*[-1,1])
+      ;makes sure yb does not go outside the image borders
+      yb=yb>0
+      yb=yb<s[2]
+      
+      ;re-finds the line
+      temp=spN[yb[0]:yb[1]]
+      res=gaussfit(findgen(n_elements(temp)),temp,coeff,nterms=4)
+      
+      if coeff[0] ge 0 and coeff[0] le n_elements(temp) then pos_line_pix[j]=yb[0]+coeff[1]
+    endfor
     for j=0,n_elements(pos_line_pix)-1 do if max(line_list) eq -1 then line_list=[i,pos_line_pix[j],ThAr_list_order[j]] else line_list=[[line_list],[i,pos_line_pix[j],ThAr_list_order[j]]] ; sets line_list
   endelse
 endfor
@@ -873,7 +884,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
 
   ;Takes the user's list of bias, if provided
   if keyword_set(lbias) then begin
-    readcol,lbias,format='(a)',lbias
+    readcol,lbias,format='(a)',lbias,/silent
     h=headfits(lbias[0])
     if sxpar(h,'RDNOISEA') eq 4.2 then lbiasNr=lbias else lbiasSr=lbias
   endif
@@ -935,7 +946,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
 
   ;Takes the user's list of ThAr, if provided
   if keyword_set(lthar) then begin
-    readcol,lthar,format='(a)',lthar
+    readcol,lthar,format='(a)',lthar,/silent
     h=headfits(lthar[0])
     if strcmp(sxpar(h,'GSLIPOS'),'FOURSLICE') then lthar1f=lthar else lthar2f=lthar
   endif
@@ -999,7 +1010,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
 
   ;Takes the user's list of flats, if provided
   if keyword_set(lflat) then begin
-    readcol,lflat,format='(a)',lflat
+    readcol,lflat,format='(a)',lflat,/silent
     h=headfits(lflat[0])
     if strcmp(sxpar(h,'GSLIPOS'),'FOURSLICE') then lflat1f=lflat else lflat2f=lflat
   endif
