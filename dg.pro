@@ -5,7 +5,7 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;BUG: 2-fiber sky spectrum wavegnth calibration wrong! Need to update find_line, its outputs vec_line and slit_tilt, and all the functions that use it.
+; still need to improve line fits (line ~366), but quite good now!
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
@@ -332,9 +332,9 @@ for i=0,s[1]-1 do begin
       yb=yb<s[2]
       sample=sp_2d[i/step*wdt:(i/step+1)*wdt-1,yb[0]:yb[1]]
       ;uses the extracted shape of the line as reference (on non-continuum corrected spectrum)
-      ref=spN[pos_line_pix[j]-lineHW:pos_line_pix[j]+lineHW]
-      ;would skip if a pixel-value is over the non-linearity threshold (in ADU)
-      psat=where(sample[*,lineHw/2:lineHw*1.5] gt nonlin)
+      ref=spN[yb[0]:yb[1]]
+      ;;would skip if a pixel-value is over the non-linearity threshold (in ADU)
+      ;psat=where(sample[*,lineHw/2:lineHw*1.5] gt nonlin)
       
       ;cross-correlates the shape of the line accross "sample"
       vcen=fltarr(wdt)
@@ -355,11 +355,11 @@ for i=0,s[1]-1 do begin
     ;removes deviant measurement of tilt (3sig)
     pos=where(abs(vec_tilt-median(vec_tilt)) gt 3*stddev(vec_tilt))
     while max(pos) ne -1 do begin
-      remove,pos,vec_line,vec_tilt
+      remove,pos,pos_line_pix,vec_tilt
       pos=where(abs(vec_tilt-median(vec_tilt)) gt 3*stddev(vec_tilt))
     endwhile
     ;fits the slit tilt as a function of pixel (gentle slope)
-    res=ladfit(vec_line,vec_tilt)
+    res=ladfit(pos_line_pix,vec_tilt)
     slit_tilt[*,i]=res
   endif else begin
     ;improves the fit to individual lines
