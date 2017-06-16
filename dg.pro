@@ -366,7 +366,7 @@ for i=0,s[1]-1 do begin
   
   ;removes small lines
   amp_lines=spline(findgen(n_elements(spN)),spN,pos_line_pix)
-  pos=where(amp_lines lt 500) ;500 is an semi-educated, but mostly arbitrary value
+  pos=where(amp_lines lt 50) ;50 is an semi-educated, but mostly arbitrary value
   if max(pos) ne -1 then remove,pos,pos_line_pix,ThAr_list_order
   
   ;does different things if you want to get the tilt of the line list
