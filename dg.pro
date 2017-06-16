@@ -7,20 +7,73 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;  FUNCTION APPLYING THE OVERSCAN CORRECTION (nice, but not necessary)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-function overs_corr,im,overs
+function overs_corr,im,h
 s=size(im)
 len=s[2] ;numer of pixels in one row
 
-;Gets the overscan value for each row
-vec_overs=fltarr(len)
-for i=0,len-1 do vec_overs[i]=mean(im[s[1]-overs:s[1]-1,i])
-
-;Fits a slope to the overscan values as a function of row #
-res=ladfit(findgen(len),vec_overs)
-
-;Creates the overscan corrected resulting image
-im_corr=fltarr(s[1]-overs,len)
-for i=0,len-1 do im_corr[*,i]=im[0:s[1]-overs-1,i]-(res[0]+res[1]*i)
+;Two approches depending on if it was observed in 1 or 2amp mode
+if strcmp(strcompress(sxpar(h,'AMPLIST'),/remove),'a') then begin
+  ;Gets the biassec and ccdsec from the header
+  bsec=sxpar(h,'BIASSEC')
+  bsec=strmid(bsec,1,strpos(bsec,',')-1)
+  bsec1=strmid(bsec,0,strpos(bsec,':'))-1
+  bsec2=strmid(bsec,strpos(bsec,':')+1)-1
+  csec=sxpar(h,'CCDSEC')
+  csec=strmid(csec,1,strpos(csec,',')-1)
+  csec1=strmid(csec,0,strpos(csec,':'))-1
+  csec2=strmid(csec,strpos(csec,':')+1)-1
+  
+  ;Gets the overscan value for each row
+  vec_overs=fltarr(len)
+  for i=0,len-1 do vec_overs[i]=mean(im[bsec1+1:bsec2,i])
+  
+  ;Fits a slope to the overscan values as a function of row #
+  res=ladfit(findgen(len),vec_overs)
+  
+  ;Creates the overscan corrected resulting image
+  im_corr=fltarr(csec2+1,len)
+  for i=0,len-1 do im_corr[0:csec2,i]=im[csec1+8:csec2+8,i]-(res[0]+res[1]*i) ;the first 8 pixels have no information
+endif else begin
+  ;Gets the biassec and ccdsec from the header
+  bsecA=sxpar(h,'BSECA')
+  bsecA=strmid(bsecA,1,strpos(bsecA,',')-1)
+  bsecA1=strmid(bsecA,0,strpos(bsecA,':'))-1
+  bsecA2=strmid(bsecA,strpos(bsecA,':')+1)-1
+  csecA=sxpar(h,'CSECA')
+  csecA=strmid(csecA,1,strpos(csecA,',')-1)
+  csecA1=strmid(csecA,0,strpos(csecA,':'))-1
+  csecA2=strmid(csecA,strpos(csecA,':')+1)-1
+  
+  bsecB=sxpar(h,'BSECB')
+  bsecB=strmid(bsecB,1,strpos(bsecB,',')-1)
+  bsecB1=strmid(bsecB,0,strpos(bsecB,':'))-1
+  bsecB2=strmid(bsecB,strpos(bsecB,':')+1)-1
+  csecB=sxpar(h,'CSECB')
+  csecB=strmid(csecB,1,strpos(csecB,',')-1)
+  csecB1=strmid(csecB,0,strpos(csecB,':'))-1
+  csecB2=strmid(csecB,strpos(csecB,':')+1)-1
+  
+  ;Gets the overscan value for each row
+  vec_oversA=fltarr(len)
+  vec_oversB=fltarr(len)
+  for i=0,len-1 do begin
+    ; for the A part
+    vec_oversA[i]=mean(im[bsecA1:bsecA2-1,i])
+    ; for the B part
+    vec_oversB[i]=mean(im[bsecB1+1:bsecB2,i])
+  endfor
+  
+  ;Fits a slope to the overscan values as a function of row #
+  resA=ladfit(findgen(len),vec_oversA)
+  resB=ladfit(findgen(len),vec_oversB)
+  
+  ;Creates the overscan corrected resulting image
+  im_corr=fltarr(csecB2-bsecA2,len)
+  for i=0,len-1 do begin
+    im_corr[0:csecA2-bsecA2-1,i]=im[csecA1:csecA2,i]-(resA[0]+resA[1]*i)
+    im_corr[csecB1-bsecA2-1:csecB2-bsecA2-1,i]=im[csecB1:csecB2,i]-(resB[0]+resB[1]*i)
+  endfor
+endelse
 
 return,im_corr
 end
@@ -786,7 +839,6 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
   ;Parameters for detector
   nonlin=46400 ;non-linearity threshold in ADU
   satura=65000 ;saturation limit in ADU
-  overs=31     ;size of the overscan in pixel
 
 
   ;;;;;;;;;;;;;;;;
@@ -809,8 +861,8 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
   ;;first order to extract
   first_order=22
   ;hardcoded x-pixel values used as a first guess where to find the traces
-  ;vcen=[38, 68,  99,  129,  160,  191,  223,  254,  287,  320,  354,  389, 424, 461, 499, 537, 577, 618, 660, 704, 748, 794, 842, 891, 941, 993, 1047, 1102,  1159,  1218,  1278,  1341,  1405,  1472,  1541, 1612, 1686] ;from order 21 to 57
-  vcen=[68,  99,  129,  160,  191,  223,  254,  287,  320,  354,  389, 424, 461, 499, 537, 577, 618, 660, 704, 748, 794, 842, 891, 941, 993, 1047, 1102,  1159,  1218,  1278,  1341,  1405,  1472,  1541, 1612] ;from order 22 to 56
+  ;vcen=[30, 60,  91,  121,  152,  183,  215,  246,  279,  312,  346,  381, 416, 453, 491, 529, 569, 610, 652, 696, 740, 786, 834, 883, 933, 985, 1039, 1094,  1151,  1210,  1270,  1333,  1397,  1464,  1533, 1604, 1678] ;from order 21 to 57
+  vcen=[60,  91,  121,  152,  183,  215,  246,  279,  312,  346,  381, 416, 453, 491, 529, 569, 610, 652, 696, 740, 786, 834, 883, 933, 985, 1039, 1094,  1151,  1210,  1270,  1333,  1397,  1464,  1533, 1604] ;from order 22 to 56
   ;number of orders to extract
   nord=n_elements(vcen)
 
@@ -899,7 +951,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
       ;IMPORTANT NOTE: No rejection method used at this point!
       for i=0,n_elements(lbiasNr)-1 do begin
         im=readfits(lbiasNr[i],/silent)
-        im_overs=overs_corr(im,overs)
+        im_overs=overs_corr(im,hb)
         if i eq 0 then biasNr=im_overs/n_elements(lbiasNr) else biasNr=biasNr+im_overs/n_elements(lbiasNr)
       endfor
       writefits,reddir+'BiasNormal'+biasdate+'.fits',biasNr;,hb
@@ -920,7 +972,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
       ;IMPORTANT NOTE: No rejection method used at this point!
       for i=0,n_elements(lbiasSr)-1 do begin
         im=readfits(lbiasSr[i],/silent)
-        im_overs=overs_corr(im,overs)
+        im_overs=overs_corr(im,hb)
         if i eq 0 then biasSr=im_overs/n_elements(lbiasSr) else biasSr=biasSr+im_overs/n_elements(lbiasSr)
       endfor
       writefits,reddir+'BiasSlow'+biasdate+'.fits',biasSr;,hb
@@ -961,7 +1013,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
       ;IMPORTANT NOTE: No rejection method used at this point!
       for i=0,n_elements(lthar1f)-1 do begin
         im=readfits(lthar1f[i],/silent)
-        im_overs=overs_corr(im,overs)
+        im_overs=overs_corr(im,ht)
         if i eq 0 then thar1f=im_overs/n_elements(lthar1f) else thar1f=thar1f+im_overs/n_elements(lthar1f)
       endfor
       thar1f=thar1f-biasNr
@@ -983,7 +1035,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
       ;IMPORTANT NOTE: No rejection method used at this point!
       for i=0,n_elements(lthar2f)-1 do begin
         im=readfits(lthar2f[i],/silent)
-        im_overs=overs_corr(im,overs)
+        im_overs=overs_corr(im,ht)
         if i eq 0 then thar2f=im_overs/n_elements(lthar2f) else thar2f=thar2f+im_overs/n_elements(lthar2f)
       endfor
       thar2f=thar2f-biasNr
@@ -1025,7 +1077,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
       ;IMPORTANT NOTE: No rejection method used at this point!
       for i=0,n_elements(lflat1f)-1 do begin
         im=readfits(lflat1f[i],/silent)
-        im_overs=overs_corr(im,overs)
+        im_overs=overs_corr(im,hf)
         if i eq 0 then flat1f=im_overs/n_elements(lflat1f) else flat1f=flat1f+im_overs/n_elements(lflat1f)
       endfor
       flat1f=flat1f-biasNr
@@ -1047,7 +1099,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
       ;IMPORTANT NOTE: No rejection method used at this point!
       for i=0,n_elements(lflat2f)-1 do begin
         im=readfits(lflat2f[i],/silent)
-        im_overs=overs_corr(im,overs)
+        im_overs=overs_corr(im,hf)
         if i eq 0 then flat2f=im_overs/n_elements(lflat2f) else flat2f=flat2f+im_overs/n_elements(lflat2f)
       endfor
       flat2f=flat2f-biasNr
@@ -1257,7 +1309,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
       ;picks the right bias
       if sxpar(h,'RDNOISEA') eq 4.2 then bias_i=biasNr else bias_i=biasSr
       ;corrects for the bias level using the overscan
-      im=overs_corr(im,overs)
+      im=overs_corr(im,h)
       ;corrects for the bias structure (usually pretty flat) using the bias frame
       im=im-bias_i
       ;reduces the 2d spectrum
