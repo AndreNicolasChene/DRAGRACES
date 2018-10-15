@@ -761,9 +761,9 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
   print,''
   print,'~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*'
   print,''
-  print,'Version 1.0.1'
+  print,'Version 1.1.1'
   print,'Author: Andre-Nicolas Chene'
-  print,'Release date: 20 September 2016'
+  print,'Release date: 16 October 2018'
   print,''
   print,''
 
