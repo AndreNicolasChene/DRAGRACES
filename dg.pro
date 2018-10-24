@@ -422,7 +422,7 @@ for i=0,s[1]-1 do begin
       temp=spN[yb[0]:yb[1]]
       res=gaussfit(findgen(n_elements(temp)),temp,coeff,nterms=4)
       
-      if coeff[0] ge 0 and coeff[0] le n_elements(temp) then pos_line_pix[j]=yb[0]+coeff[1]
+      if coeff[1] ge 0 and coeff[1] le n_elements(temp) then pos_line_pix[j]=yb[0]+coeff[1]
     endfor
     for j=0,n_elements(pos_line_pix)-1 do if max(line_list) eq -1 then line_list=[i,pos_line_pix[j],ThAr_list_order[j]] else line_list=[[line_list],[i,pos_line_pix[j],ThAr_list_order[j]]] ; sets line_list
   endelse
@@ -761,9 +761,9 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
   print,''
   print,'~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*'
   print,''
-  print,'Version 1.0.1'
+  print,'Version 1.1.1'
   print,'Author: Andre-Nicolas Chene'
-  print,'Release date: 20 September 2016'
+  print,'Release date: 16 October 2018'
   print,''
   print,''
 
