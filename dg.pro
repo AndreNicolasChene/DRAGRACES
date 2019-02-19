@@ -334,7 +334,7 @@ for i=0,s[1]-1 do begin
 
   ;the guess solution comes from coeff_orders
   coeff=coeff_orders[*,i/step]
-  vec_pix=findgen(4300)
+  vec_pix=findgen(n_elements(spN))
   wave_vs_pix=coeff[0]+coeff[1]*(vec_pix+1)+coeff[2]*(vec_pix+1)^2+coeff[3]*(vec_pix+1)^3+coeff[4]*(vec_pix+1)^4
   ThAr_list_order=ThAr_list[where(ThAr_list ge min(wave_vs_pix) and ThAr_list le max(wave_vs_pix))]
   pos_line_pix=spline(wave_vs_pix,vec_pix,ThAr_list_order)
@@ -395,9 +395,7 @@ for i=0,s[1]-1 do begin
         vcen[k]=-co[1]
       endfor
       ;fits the slit tilt
-      if step eq 2 then begin
-        if i mod step eq 0 then res=ladfit(findgen(wdt/2),vcen[0:wdt/2-1]) else res=ladfit(findgen(round(wdt/2.)),vcen[wdt/2:n_elements(vcen)-1])
-      endif else res=ladfit(findgen(n_elements(vcen)),vcen)
+      res=ladfit(findgen(n_elements(vcen)),vcen)
       if max(vec_tilt) eq -1 then vec_tilt=res[1] else vec_tilt=[vec_tilt,res[1]]
     endfor
     ;removes deviant measurement of tilt (3sig)
