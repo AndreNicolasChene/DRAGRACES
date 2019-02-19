@@ -761,10 +761,9 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
   print,''
   print,'~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*'
   print,''
-  print,'Version 1.1.1'
   print,'Author: Andre-Nicolas Chene'
-  print,'Release date: 16 October 2018'
   print,''
+  print,'DOI = 10.5281/zenodo.817613'
   print,''
 
   if keyword_set(help) then begin
