@@ -652,7 +652,7 @@ end
 ;  FUNCTION WHERE THE WAVELENGTH SOLUTION IS CALCULATED
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; used to find the ThAr lines or to measure the slit tilt
-function wavel_sol,line_list,spmd,vec_lines_used=vec_lines_used
+function wavel_sol,line_list,spmd,reddir,vec_lines_used=vec_lines_used
 
 ;depends on which spectral mode we are in
 case spmd of
@@ -670,18 +670,28 @@ for i=0,nord-1 do begin
     
   ;Does the final fit of the pixel position vs wavelength for all the remaining lines
   ;the while loop is to remove deviant points
-  pos=0
-  while max(pos) ne -1 and n_elements(pos_line_pix) ge 3 do begin
-    coeff=poly_fit(pos_line_pix,line_wave,4,yfit=yfit)
-    dev=line_wave-yfit
-    pos=where(abs(dev) ge 3*stddev(dev)) ;removes deviant points
-    if max(pos) ne -1 then if n_elements(pos) le n_elements(line_wave)-3 then remove,pos,pos_line_pix,line_wave else pos=-1
-  endwhile
+  coeff=robust_poly_fit(pos_line_pix,line_wave,4,yfit)
   res[*,i]=coeff 
   
   for k=0,n_elements(pos_line_pix)-1 do vec_lines_used=[[vec_lines_used],[pos_line_pix[k],line_wave[k]]]
   vec_lines_used=[[vec_lines_used],[-1,-1]]
 endfor
+
+;Creates plots of the resolution power (R) as a function of wavelength
+set_plot,'ps'
+device,filename=reddir+'Resolution'+spmd+'.eps',xsize=6,ysize=4,/inches,/color,/encapsulated
+loadct,13
+plotsym,0,/fill
+dispersion=(res[1,line_list[0,*]]+res[2,line_list[0,*]]*4608+res[3,line_list[0,*]]*4608^2+res[4,line_list[0,*]]*4608^3)
+resolution=(line_list[3,*]*dispersion/line_list[2,*])^(-1)/1000
+plot,line_list[2,*],resolution,psym=8,symsize=.5,yrange=median(resolution)+20*[-1,1],/xst,/yst,xtitle='wavelength (A)',ytitle='resolution power (x1000)'
+if max(where(finite(resolution)) ne 1) ne -1 then remove,where(finite(resolution) ne 1),resolution
+oplot,[3500,1.1e4],median(resolution)*[1,1],color=255
+oplot,[3500,1.1e4],median(resolution)*[1,1]-stddev(resolution),linestyle=1,color=255
+oplot,[3500,1.1e4],median(resolution)*[1,1]+stddev(resolution),linestyle=1,color=255
+device,/close
+set_plot,'x'
+
 
 return,res
 end
