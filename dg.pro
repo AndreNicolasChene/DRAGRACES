@@ -835,6 +835,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
   ;;;;;;;;;;;;;;;;
   ;Directory were the data are:
   if keyword_set(dir) then datadir=dir else datadir='./'
+  if strcmp(strmid(dir,strlen(dir)-1),'/') ne 1 then dir=dir+'/'
   if strcmp(strmid(datadir,strlen(datadir)-1),'/') ne 1 then datadir=datadir+'/' ;adds the / if not included in the path
   reddir=datadir+'Reduction/'
   ;creates the reduction directory if it does not exist
@@ -892,6 +893,8 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
     ;Finds all the GRACES frames in the data directory
     lstot=findfile(datadir+'N????????G*.fits')
   endelse
+  ;Now the date is known, tweaks vcen based on date to account for shifts due to the fiber being taken out and back into the spectrograph between Sept and Dec 2018
+  if float(strmid(lstot[0],strlen(datadir)+1,8)) gt 20181101 then vcen=vcen+15
   ;checks if it any frame exist
   if min(strcmp(lstot,'')) eq 1 then begin
     print,''
@@ -1243,7 +1246,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
     wdt=wdt-1 ;the width is reduced by one pixel at this point; easier for reduction
 
     ;runs reduce on the ThAr wih the aim to produce an .eps figure showing where the
-    ;  traces are extracted, ans with which slit tilt.
+    ;  traces are extracted, and with which slit tilt.
     junk=reduce(thar,matcoeff,wdt,slit_tilt,mask=nonlin,disp=spmd+thardate,dir=reddir)
 
     ;Gets the normalized flat field
@@ -1275,7 +1278,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
     endif else begin
       ;Finds the pix position of strongest lines
       line_list=find_lines(wavel_sp,wavel2d,spmd,wdt,resel,nonlin)
-      wavel_sol_per_order=wavel_sol(line_list,spmd,vec_lines_used=vec_lines_used)
+      wavel_sol_per_order=wavel_sol(line_list,spmd,reddir,vec_lines_used=vec_lines_used)
       ;displays the identified lines in a multiple pages .ps file.
       ; note that most of the follow variables are tuned to give acceptable plots.
       set_plot,'ps'
@@ -1300,7 +1303,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
         multiplot
         if (i+1) mod 5 eq 0 then erase
       endfor
-      multiplot,/reset
+      multiplot,[1,1]
       device,/close
       set_plot,'x'
     endelse
