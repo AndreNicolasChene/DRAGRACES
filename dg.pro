@@ -422,7 +422,7 @@ for i=0,s[1]-1 do begin
       
       if coeff[1] ge 0 and coeff[1] le n_elements(temp) then pos_line_pix[j]=yb[0]+coeff[1]
     endfor
-    for j=0,n_elements(pos_line_pix)-1 do if max(line_list) eq -1 then line_list=[i,pos_line_pix[j],ThAr_list_order[j]] else line_list=[[line_list],[i,pos_line_pix[j],ThAr_list_order[j]]] ; sets line_list
+    for j=0,n_elements(pos_line_pix)-1 do if max(line_list) eq -1 then line_list=[i,pos_line_pix[j],ThAr_list_order[j],fwhm_line_pix[j]] else line_list=[[line_list],[i,pos_line_pix[j],ThAr_list_order[j],fwhm_line_pix[j]]] ; sets line_list
   endelse
 endfor
 
