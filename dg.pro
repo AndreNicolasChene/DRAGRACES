@@ -424,7 +424,7 @@ for i=0,s[1]-1 do begin
       if coeff[1] ge 0 and coeff[1] le n_elements(temp) then begin
         fwhm_line_pix[j]=coeff[2]*2*sqrt(2*alog(2))
         pos_line_pix[j]=yb[0]+coeff[1]
-      endif else pos_line_pix[j]=-1
+      endif else pos_line_pix[j]=-2
     endfor
     for j=0,n_elements(pos_line_pix)-1 do if max(line_list) eq -1 then line_list=[i,pos_line_pix[j],ThAr_list_order[j],fwhm_line_pix[j]] else line_list=[[line_list],[i,pos_line_pix[j],ThAr_list_order[j],fwhm_line_pix[j]]] ; sets line_list
   endelse
@@ -671,6 +671,8 @@ for i=0,nord-1 do begin
   pos=where(line_list[0,*] eq i)
   pos_line_pix=line_list[1,pos]
   line_wave=line_list[2,pos]
+  pos=where(pos_line_pix lt 0)
+  if max(pos) ne -1 then remove,pos,pos_line_pix,line_wave
     
   ;Does the final fit of the pixel position vs wavelength for all the remaining lines
   ;the while loop is to remove deviant points
