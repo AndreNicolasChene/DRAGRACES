@@ -409,6 +409,7 @@ for i=0,s[1]-1 do begin
     slit_tilt[*,i]=res
   endif else begin
     ;improves the fit to individual lines
+    fwhm_line_pix=fltarr(n_elements(pos_line_pix)) ;vector to record FWHM
     for j=0,n_elements(pos_line_pix)-1 do begin
       ;selects the 1D ThAr spectrum around the identified line
       yb=round(pos_line_pix[j]+lineHW*[-1,1])
@@ -420,7 +421,10 @@ for i=0,s[1]-1 do begin
       temp=spN[yb[0]:yb[1]]
       res=gaussfit(findgen(n_elements(temp)),temp,coeff,nterms=4)
       
-      if coeff[1] ge 0 and coeff[1] le n_elements(temp) then pos_line_pix[j]=yb[0]+coeff[1]
+      if coeff[1] ge 0 and coeff[1] le n_elements(temp) then begin
+        fwhm_line_pix[j]=coeff[2]*2*sqrt(2*alog(2))
+        pos_line_pix[j]=yb[0]+coeff[1]
+      endif else pos_line_pix[j]=-1
     endfor
     for j=0,n_elements(pos_line_pix)-1 do if max(line_list) eq -1 then line_list=[i,pos_line_pix[j],ThAr_list_order[j],fwhm_line_pix[j]] else line_list=[[line_list],[i,pos_line_pix[j],ThAr_list_order[j],fwhm_line_pix[j]]] ; sets line_list
   endelse
