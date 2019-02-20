@@ -334,7 +334,7 @@ for i=0,s[1]-1 do begin
 
   ;the guess solution comes from coeff_orders
   coeff=coeff_orders[*,i/step]
-  vec_pix=findgen(4300)
+  vec_pix=findgen(n_elements(spN))
   wave_vs_pix=coeff[0]+coeff[1]*(vec_pix+1)+coeff[2]*(vec_pix+1)^2+coeff[3]*(vec_pix+1)^3+coeff[4]*(vec_pix+1)^4
   ThAr_list_order=ThAr_list[where(ThAr_list ge min(wave_vs_pix) and ThAr_list le max(wave_vs_pix))]
   pos_line_pix=spline(wave_vs_pix,vec_pix,ThAr_list_order)
@@ -395,9 +395,7 @@ for i=0,s[1]-1 do begin
         vcen[k]=-co[1]
       endfor
       ;fits the slit tilt
-      if step eq 2 then begin
-        if i mod step eq 0 then res=ladfit(findgen(wdt/2),vcen[0:wdt/2-1]) else res=ladfit(findgen(round(wdt/2.)),vcen[wdt/2:n_elements(vcen)-1])
-      endif else res=ladfit(findgen(n_elements(vcen)),vcen)
+      res=ladfit(findgen(n_elements(vcen)),vcen)
       if max(vec_tilt) eq -1 then vec_tilt=res[1] else vec_tilt=[vec_tilt,res[1]]
     endfor
     ;removes deviant measurement of tilt (3sig)
@@ -411,6 +409,7 @@ for i=0,s[1]-1 do begin
     slit_tilt[*,i]=res
   endif else begin
     ;improves the fit to individual lines
+    fwhm_line_pix=fltarr(n_elements(pos_line_pix)) ;vector to record FWHM
     for j=0,n_elements(pos_line_pix)-1 do begin
       ;selects the 1D ThAr spectrum around the identified line
       yb=round(pos_line_pix[j]+lineHW*[-1,1])
@@ -422,9 +421,12 @@ for i=0,s[1]-1 do begin
       temp=spN[yb[0]:yb[1]]
       res=gaussfit(findgen(n_elements(temp)),temp,coeff,nterms=4)
       
-      if coeff[1] ge 0 and coeff[1] le n_elements(temp) then pos_line_pix[j]=yb[0]+coeff[1]
+      if coeff[1] ge 0 and coeff[1] le n_elements(temp) then begin
+        fwhm_line_pix[j]=coeff[2]*2*sqrt(2*alog(2))
+        pos_line_pix[j]=yb[0]+coeff[1]
+      endif else pos_line_pix[j]=-2
     endfor
-    for j=0,n_elements(pos_line_pix)-1 do if max(line_list) eq -1 then line_list=[i,pos_line_pix[j],ThAr_list_order[j]] else line_list=[[line_list],[i,pos_line_pix[j],ThAr_list_order[j]]] ; sets line_list
+    for j=0,n_elements(pos_line_pix)-1 do if max(line_list) eq -1 then line_list=[i,pos_line_pix[j],ThAr_list_order[j],fwhm_line_pix[j]] else line_list=[[line_list],[i,pos_line_pix[j],ThAr_list_order[j],fwhm_line_pix[j]]] ; sets line_list
   endelse
 endfor
 
@@ -654,7 +656,7 @@ end
 ;  FUNCTION WHERE THE WAVELENGTH SOLUTION IS CALCULATED
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; used to find the ThAr lines or to measure the slit tilt
-function wavel_sol,line_list,spmd,vec_lines_used=vec_lines_used
+function wavel_sol,line_list,spmd,reddir,vec_lines_used=vec_lines_used
 
 ;depends on which spectral mode we are in
 case spmd of
@@ -669,21 +671,33 @@ for i=0,nord-1 do begin
   pos=where(line_list[0,*] eq i)
   pos_line_pix=line_list[1,pos]
   line_wave=line_list[2,pos]
+  pos=where(pos_line_pix lt 0)
+  if max(pos) ne -1 then remove,pos,pos_line_pix,line_wave
     
   ;Does the final fit of the pixel position vs wavelength for all the remaining lines
   ;the while loop is to remove deviant points
-  pos=0
-  while max(pos) ne -1 and n_elements(pos_line_pix) ge 3 do begin
-    coeff=poly_fit(pos_line_pix,line_wave,4,yfit=yfit)
-    dev=line_wave-yfit
-    pos=where(abs(dev) ge 3*stddev(dev)) ;removes deviant points
-    if max(pos) ne -1 then if n_elements(pos) le n_elements(line_wave)-3 then remove,pos,pos_line_pix,line_wave else pos=-1
-  endwhile
+  coeff=robust_poly_fit(pos_line_pix,line_wave,4,yfit)
   res[*,i]=coeff 
   
   for k=0,n_elements(pos_line_pix)-1 do vec_lines_used=[[vec_lines_used],[pos_line_pix[k],line_wave[k]]]
   vec_lines_used=[[vec_lines_used],[-1,-1]]
 endfor
+
+;Creates plots of the resolution power (R) as a function of wavelength
+set_plot,'ps'
+device,filename=reddir+'Resolution'+spmd+'.eps',xsize=6,ysize=4,/inches,/color,/encapsulated
+loadct,13
+plotsym,0,/fill
+dispersion=(res[1,line_list[0,*]]+res[2,line_list[0,*]]*4608+res[3,line_list[0,*]]*4608^2+res[4,line_list[0,*]]*4608^3)
+resolution=(line_list[3,*]*dispersion/line_list[2,*])^(-1)/1000
+plot,line_list[2,*],resolution,psym=8,symsize=.5,yrange=median(resolution)+20*[-1,1],/xst,/yst,xtitle='wavelength (A)',ytitle='resolution power (x1000)'
+if max(where(finite(resolution)) ne 1) ne -1 then remove,where(finite(resolution) ne 1),resolution
+oplot,[3500,1.1e4],median(resolution)*[1,1],color=255
+oplot,[3500,1.1e4],median(resolution)*[1,1]-stddev(resolution),linestyle=1,color=255
+oplot,[3500,1.1e4],median(resolution)*[1,1]+stddev(resolution),linestyle=1,color=255
+device,/close
+set_plot,'x'
+
 
 return,res
 end
@@ -761,10 +775,9 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
   print,''
   print,'~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*'
   print,''
-  print,'Version 1.1.1'
   print,'Author: Andre-Nicolas Chene'
-  print,'Release date: 16 October 2018'
   print,''
+  print,'DOI = 10.5281/zenodo.817613'
   print,''
 
   if keyword_set(help) then begin
@@ -828,6 +841,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
   ;;;;;;;;;;;;;;;;
   ;Directory were the data are:
   if keyword_set(dir) then datadir=dir else datadir='./'
+  if strcmp(strmid(dir,strlen(dir)-1),'/') ne 1 then dir=dir+'/'
   if strcmp(strmid(datadir,strlen(datadir)-1),'/') ne 1 then datadir=datadir+'/' ;adds the / if not included in the path
   reddir=datadir+'Reduction/'
   ;creates the reduction directory if it does not exist
@@ -885,6 +899,8 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
     ;Finds all the GRACES frames in the data directory
     lstot=findfile(datadir+'N????????G*.fits')
   endelse
+  ;Now the date is known, tweaks vcen based on date to account for shifts due to the fiber being taken out and back into the spectrograph between Sept and Dec 2018
+  if float(strmid(lstot[0],strlen(datadir)+1,8)) gt 20181101 then vcen=vcen+15
   ;checks if it any frame exist
   if min(strcmp(lstot,'')) eq 1 then begin
     print,''
@@ -1236,7 +1252,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
     wdt=wdt-1 ;the width is reduced by one pixel at this point; easier for reduction
 
     ;runs reduce on the ThAr wih the aim to produce an .eps figure showing where the
-    ;  traces are extracted, ans with which slit tilt.
+    ;  traces are extracted, and with which slit tilt.
     junk=reduce(thar,matcoeff,wdt,slit_tilt,mask=nonlin,disp=spmd+thardate,dir=reddir)
 
     ;Gets the normalized flat field
@@ -1268,7 +1284,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
     endif else begin
       ;Finds the pix position of strongest lines
       line_list=find_lines(wavel_sp,wavel2d,spmd,wdt,resel,nonlin)
-      wavel_sol_per_order=wavel_sol(line_list,spmd,vec_lines_used=vec_lines_used)
+      wavel_sol_per_order=wavel_sol(line_list,spmd,reddir,vec_lines_used=vec_lines_used)
       ;displays the identified lines in a multiple pages .ps file.
       ; note that most of the follow variables are tuned to give acceptable plots.
       set_plot,'ps'
@@ -1293,7 +1309,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
         multiplot
         if (i+1) mod 5 eq 0 then erase
       endfor
-      multiplot,/reset
+      multiplot,[1,1]
       device,/close
       set_plot,'x'
     endelse
