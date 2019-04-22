@@ -777,6 +777,9 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
   print,''
   print,'Author: Andre-Nicolas Chene'
   print,''
+  print,'version 1.3.1 (beta)'
+  print,''
+  print,'Please refer to the DOI number. DOI of the version 1.0 is:'
   print,'DOI = 10.5281/zenodo.817613'
   print,''
 
@@ -840,8 +843,10 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
 
   ;;;;;;;;;;;;;;;;
   ;Directory were the data are:
-  if keyword_set(dir) then datadir=dir else datadir='./'
-  if strcmp(strmid(dir,strlen(dir)-1),'/') ne 1 then dir=dir+'/'
+  if keyword_set(dir) then begin
+    datadir=dir
+    if strcmp(strmid(dir,strlen(dir)-1),'/') ne 1 then dir=dir+'/'
+  endif else datadir='./'
   if strcmp(strmid(datadir,strlen(datadir)-1),'/') ne 1 then datadir=datadir+'/' ;adds the / if not included in the path
   reddir=datadir+'Reduction/'
   ;creates the reduction directory if it does not exist
@@ -900,7 +905,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
     lstot=findfile(datadir+'N????????G*.fits')
   endelse
   ;Now the date is known, tweaks vcen based on date to account for shifts due to the fiber being taken out and back into the spectrograph between Sept and Dec 2018
-  if float(strmid(lstot[0],strlen(datadir)+1,8)) gt 20181101 then vcen=vcen+15
+  if float(strmid(lstot[0],strpos(lstot[0],'.fits')-13,8)) gt 20181101 then vcen=vcen+15
   ;checks if it any frame exist
   if min(strcmp(lstot,'')) eq 1 then begin
     print,''
