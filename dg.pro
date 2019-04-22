@@ -777,7 +777,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
   print,''
   print,'Author: Andre-Nicolas Chene'
   print,''
-  print,'version 1.3.1 (beta)'
+  print,'version 1.3.1'
   print,''
   print,'Please refer to the DOI number. DOI of the version 1.0 is:'
   print,'DOI = 10.5281/zenodo.817613'
