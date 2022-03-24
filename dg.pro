@@ -102,6 +102,14 @@ endif else begin
   vcen=vcen-6 ;slight shift measured in the position of the order with respect to 1-fiber mode
 endelse
 
+;first crude re-alignement to find the centroid of the traces (as they may move over time on the detector)
+sp_ref=fltarr(n_elements(cutmh))
+for i=0,n_elements(vcen)-1 do sp_ref[vcen[i]-n_elements(ref)/2:vcen[i]+n_elements(ref)/2]=ref
+lag=findgen(101)-50 ;x-vector for the cross-correlation
+cc=c_correlate(cutmh,sp_ref,lag)          ;cross-correlation (CC)
+junk=max(cc,pos_lag)                      ;Simply picks the max of the cc
+vcen=vcen-lag[pos_lag]                    ;shifts vcen
+
 ;;;;;;;;;;;;;;;;
 ;Quick loop to improve the centroid of each order as measured in "trace" (cut of the flat at mid-height)
 lag=findgen(9)-4 ;x-vector for the cross-correlation
