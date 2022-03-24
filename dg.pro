@@ -98,7 +98,7 @@ a=findgen(wdt) ;x-vector the size of the aperture
 if strcmp(spmd,'1f') then begin
   ref=.7*exp(-1*((a-3.5)^2/(2*2.^2)))+exp(-1*((a-10.5)^2/(2*2.^2)))+exp(-1*((a-17.5)^2/(2*2.^2)))+.5*exp(-1*((a-24.5)^2/(2*2.^2)))
 endif else begin
-  ref=.7*exp(-1*((a-4.0)^2/(2*2.^2)))+exp(-1*((a-10.0)^2/(2*2.^2)))+.9*exp(-1*((a-20.5)^2/(2*2.^2))+exp(-1*((a-27.0)^2/(2*2.^2))))
+  ref=.7*exp(-1*((a-4.0)^2/(2*2.^2)))+exp(-1*((a-10.0)^2/(2*2.^2)))+.9*exp(-1*((a-20.5)^2/(2*2.^2)))+exp(-1*((a-27.0)^2/(2*2.^2)))
   vcen=vcen-6 ;slight shift measured in the position of the order with respect to 1-fiber mode
 endelse
 
@@ -777,10 +777,10 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
   print,''
   print,'Author: Andre-Nicolas Chene'
   print,''
-  print,'version 1.3.1'
+  print,'version 1.4.0'
   print,''
-  print,'Please refer to the DOI number. DOI of the version 1.0 is:'
-  print,'DOI = 10.5281/zenodo.817613'
+  print,'Please cite the AJ paper:'
+  print,'https://ui.adsabs.harvard.edu/abs/2021AJ....161..109C/abstract'
   print,''
 
   if keyword_set(help) then begin
@@ -969,11 +969,30 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
       ;if a Master Bias has already been processed, it takes this one.
       biasNr=readfits(reddir+'BiasNormal'+biasdate+'.fits',/silent)
     endif else begin
-      ;IMPORTANT NOTE: No rejection method used at this point!
+      ;IMPORTANT NOTE: MinMax rejection method used!
       for i=0,n_elements(lbiasNr)-1 do begin
         im=readfits(lbiasNr[i],/silent)
-        im_overs=overs_corr(im,hb)
-        if i eq 0 then biasNr=im_overs/n_elements(lbiasNr) else biasNr=biasNr+im_overs/n_elements(lbiasNr)
+        im_overs=overs_corr(im,hb) ;overscan corrected frame
+        if i eq 0 then begin
+          ;if it is the first frame, it creates the matrix that will hold all the bias frames
+          dim_bias_frame=size(im_overs)
+          mat_biases=fltarr(dim_bias_frame[1],dim_bias_frame[2],n_elements(lbiasNr))
+        endif
+        mat_biases[*,*,i]=im_overs ;adds the bias frame to mat_biases
+      endfor
+      biasNr=fltarr(dim_bias_frame[1],dim_bias_frame[2]) ;finale master bias frame
+      for i=0,dim_bias_frame[1]-1 do begin
+        for j=0,dim_bias_frame[2]-1 do begin
+          temp=mat_biases[i,j,*]
+          ;removes minimum value
+          junk=min(temp,pos)
+          remove,min(pos),temp
+          ;removes maximum value
+          junk=max(temp,pos)
+          remove,max(pos),temp
+          ;records the mean
+          biasNr[i,j]=mean(temp)
+        endfor
       endfor
       writefits,reddir+'BiasNormal'+biasdate+'.fits',biasNr;,hb
     endelse
@@ -990,11 +1009,30 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
       ;if a Master Bias has already been processed, it takes this one.
       biasSr=readfits(reddir+'BiasSlow'+biasdate+'.fits',/silent)
     endif else begin
-      ;IMPORTANT NOTE: No rejection method used at this point!
+      ;IMPORTANT NOTE: MinMax rejection method used!
       for i=0,n_elements(lbiasSr)-1 do begin
         im=readfits(lbiasSr[i],/silent)
-        im_overs=overs_corr(im,hb)
-        if i eq 0 then biasSr=im_overs/n_elements(lbiasSr) else biasSr=biasSr+im_overs/n_elements(lbiasSr)
+        im_overs=overs_corr(im,hb) ;overscan corrected frame
+        if i eq 0 then begin
+          ;if it is the first frame, it creates the matrix that will hold all the bias frames
+          dim_bias_frame=size(im_overs)
+          mat_biases=fltarr(dim_bias_frame[1],dim_bias_frame[2],n_elements(lbiasSr))
+        endif
+        mat_biases[*,*,i]=im_overs ;adds the bias frame to mat_biases
+      endfor
+      biasSr=fltarr(dim_bias_frame[1],dim_bias_frame[2]) ;finale master bias frame
+      for i=0,dim_bias_frame[1]-1 do begin
+        for j=0,dim_bias_frame[2]-1 do begin
+          temp=mat_biases[i,j,*]
+          ;removes minimum value
+          junk=min(temp,pos)
+          remove,min(pos),temp
+          ;removes maximum value
+          junk=max(temp,pos)
+          remove,max(pos),temp
+          ;records the mean
+          biasSr[i,j]=mean(temp)
+        endfor
       endfor
       writefits,reddir+'BiasSlow'+biasdate+'.fits',biasSr;,hb
     endelse
@@ -1031,7 +1069,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
       ;if a Master ThAr has already been processed, it takes this one.
       thar1f=readfits(reddir+'ThAr1f'+thar1fdate+'.fits',/silent)
     endif else begin
-      ;IMPORTANT NOTE: No rejection method used at this point!
+      ;IMPORTANT NOTE: No rejection method used for ThAr spectra!
       for i=0,n_elements(lthar1f)-1 do begin
         im=readfits(lthar1f[i],/silent)
         im_overs=overs_corr(im,ht)
@@ -1053,7 +1091,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
       ;if a Master ThAr has already been processed, it takes this one.
       thar2f=readfits(reddir+'ThAr2f'+thar2fdate+'.fits',/silent)
     endif else begin
-      ;IMPORTANT NOTE: No rejection method used at this point!
+      ;IMPORTANT NOTE: No rejection method used for ThAr spectra!
       for i=0,n_elements(lthar2f)-1 do begin
         im=readfits(lthar2f[i],/silent)
         im_overs=overs_corr(im,ht)
@@ -1095,11 +1133,30 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
       ;if a Master Flat has already been processed, it takes this one.
       flat1f=readfits(reddir+'Flat1f'+flat1fdate+'.fits',/silent)
     endif else begin
-      ;IMPORTANT NOTE: No rejection method used at this point!
+      ;IMPORTANT NOTE: MinMax rejection method used!
       for i=0,n_elements(lflat1f)-1 do begin
         im=readfits(lflat1f[i],/silent)
-        im_overs=overs_corr(im,hf)
-        if i eq 0 then flat1f=im_overs/n_elements(lflat1f) else flat1f=flat1f+im_overs/n_elements(lflat1f)
+        im_overs=overs_corr(im,hf) ;overscan corrected frame
+        if i eq 0 then begin
+          ;if it is the first frame, it creates the matrix that will hold all the flat frames
+          dim_flat_frame=size(im_overs)
+          mat_flats=fltarr(dim_flat_frame[1],dim_flat_frame[2],n_elements(lflat1f))
+        endif
+        mat_flats[*,*,i]=im_overs ;adds the flat frame to mat_flats
+      endfor
+      flat1f=fltarr(dim_flat_frame[1],dim_flat_frame[2]) ;finale master bias frame
+      for i=0,dim_flat_frame[1]-1 do begin
+        for j=0,dim_flat_frame[2]-1 do begin
+          temp=mat_flats[i,j,*]
+          ;removes minimum value
+          junk=min(temp,pos)
+          remove,min(pos),temp
+          ;removes maximum value
+          junk=max(temp,pos)
+          remove,max(pos),temp
+          ;records the mean
+          flat1f[i,j]=mean(temp)
+        endfor
       endfor
       flat1f=flat1f-biasNr
       writefits,reddir+'Flat1f'+flat1fdate+'.fits',flat1f;,hf
@@ -1117,11 +1174,30 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
       ;if a Master Flat has already been processed, it takes this one.
       flat2f=readfits(reddir+'Flat2f'+flat2fdate+'.fits',/silent)
     endif else begin
-      ;IMPORTANT NOTE: No rejection method used at this point!
+      ;IMPORTANT NOTE: MinMax rejection method used!
       for i=0,n_elements(lflat2f)-1 do begin
         im=readfits(lflat2f[i],/silent)
-        im_overs=overs_corr(im,hf)
-        if i eq 0 then flat2f=im_overs/n_elements(lflat2f) else flat2f=flat2f+im_overs/n_elements(lflat2f)
+        im_overs=overs_corr(im,hf) ;overscan corrected frame
+        if i eq 0 then begin
+          ;if it is the first frame, it creates the matrix that will hold all the flat frames
+          dim_flat_frame=size(im_overs)
+          mat_flats=fltarr(dim_flat_frame[1],dim_flat_frame[2],n_elements(lflat2f))
+        endif
+        mat_flats[*,*,i]=im_overs ;adds the flat frame to mat_flats
+      endfor
+      flat2f=fltarr(dim_flat_frame[1],dim_flat_frame[2]) ;finale master bias frame
+      for i=0,dim_flat_frame[1]-1 do begin
+        for j=0,dim_flat_frame[2]-1 do begin
+          temp=mat_flats[i,j,*]
+          ;removes minimum value
+          junk=min(temp,pos)
+          remove,min(pos),temp
+          ;removes maximum value
+          junk=max(temp,pos)
+          remove,max(pos),temp
+          ;records the mean
+          flat2f[i,j]=mean(temp)
+        endfor
       endfor
       flat2f=flat2f-biasNr
       writefits,reddir+'Flat2f'+flat2fdate+'.fits',flat2f;,hf
@@ -1323,64 +1399,141 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
     ; EXTRACTION
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-    ;LOOP ON SCIENCE FRAMES
+    ;LOOP ON SCIENCE FRAMES to get list of objects
     for j=0,n_elements(lsci)-1 do begin
-      ;reads the science frame
-      im=readfits(lsci[j],h,/silent)
-      ;picks the right bias
-      if sxpar(h,'RDNOISEA') eq 4.2 then bias_i=biasNr else bias_i=biasSr
-      ;corrects for the bias level using the overscan
-      im=overs_corr(im,h)
-      ;corrects for the bias structure (usually pretty flat) using the bias frame
-      im=im-bias_i
-      ;reduces the 2d spectrum
-      sci2d=reduce(im,matcoeff,wdt,slit_tilt)
-      ;corrects the illumination
-      sci2d=illumcorr(im,sci2d,matcoeff,wdt,slit_tilt)
-      ;corrects for the flat field
-      sci2d=sci2d/flatN
-      ;extracts the spectrum
-      sci=extract(sci2d,wdt,spmd)
-
-      s=size(im)
-      ;would save the extracted spectrum if the wavelength calibration is skipped
-      if keyword_set(skip_wavel) then begin
-        fits_open,reddir+'red_'+strmid(lsci[j],strlen(datadir)),un,/write
-        ;would calibrate for the wavelength and save the final spectrum
-      endif else begin
-        final=wavel_cal(sci,wavel_sol_per_order,param=param)
-        fits_open,reddir+'ext_'+strmid(lsci[j],strlen(datadir)),un,/write
-      endelse
-      for i=0,nord*idx-1 do begin
-        ;if the spectrum is NOT calibrated
-        if keyword_set(skip_wavel) then begin
-          spectrum=total(sci[i,*],1)
-          mkhdr,h,spectrum,/image
-          sxaddpar,h,'NAXIS',1
-          sxaddpar,h,'NAXIS1',s[2]
-          sxdelpar,h,'NAXIS2'
-          ;if the spectrum is calibrated
-        endif else begin
-          spectrum=total(final[i,*],1)
-          mkhdr,h,spectrum,/image
-          sxaddpar,h,'NAXIS',1
-          sxaddpar,h,'NAXIS1',s[2]
-          sxdelpar,h,'NAXIS2'
-          sxaddpar,h,'CTYPE1','WAVE-WAV-PLY'
-          sxaddpar,h,'CUNIT1','Angstrom'
-          sxaddpar,h,'DC-FLAG',0
-          sxaddpar,h,'CRPIX1',1
-          sxaddpar,h,'CRVAL1',param[0,i]
-          sxaddpar,h,'CD1_1',param[1,i]
-        endelse
-        if spmd eq 1 then ordname=strtrim(string(i+first_order),2) else if i mod 2 eq 0 then ordname=strtrim(string(i/2+first_order),2)+' sky' else ordname=strtrim(string(i/2+first_order),2)+' target'
-        fits_write,un,spectrum,h,extname='order '+ordname,extver=i+1
-      endfor
-      fits_close,un
+      h=headfits(lsci[j])
+      temp_name=strcompress(sxpar(h,'OBJECT'),/remove)
+      if j eq 0 then obs_name=temp_name else obs_name=[obs_name,temp_name]
     endfor
-
+    ;sorts lsci by object name (obs_name) to make sure they are grouped by object
+    s_ind=sort(obs_name)
+    obs_name=obs_name[s_ind]
+    lsci=lsci[s_ind]
+    ;number of different objects oberved
+    nobj=obs_name[uniq(obs_name)]
+    
+    ;Loop on each object
+    for j=0,n_elements(nobj)-1 do begin
+      print,'Extracting ',nobj[j]
+      pos_obj=where(nobj[j] eq obs_name)
+      ;arrays to store keywords' values
+      v_RA=fltarr(n_elements(pos_obj))
+      v_DEC=fltarr(n_elements(pos_obj))
+      v_EPOCH=fltarr(n_elements(pos_obj))
+      v_EXPTIME=fltarr(n_elements(pos_obj))
+      v_AIRMASS=fltarr(n_elements(pos_obj))
+      v_OBSID=strarr(n_elements(pos_obj))
+      v_DATE=fltarr(n_elements(pos_obj))
+      v_MJD=fltarr(n_elements(pos_obj))
+      for k=0,n_elements(pos_obj)-1 do begin
+        ;reads the science frame
+        im=readfits(lsci[pos_obj[k]],h,/silent)
+        ;adds the bzero value
+        im+=float(sxpar(h,'BZERO'))
+        ;corrects for the bias level using the overscan
+        im=overs_corr(im,h)
+        ;picks the right bias, readout noise, gain
+        if sxpar(h,'RDNOISEA') eq 4.2 then begin
+          bias_i=biasNr
+          gain=1.3 & readn=4.2
+        endif else begin
+          bias_i=biasSr
+          gain=1.2 & readn=2.9
+        endelse
+        ;corrects for the bias structure (usually pretty flat) using the bias frame
+        im=im-bias_i
+        ;Stacking images for cosmic ray removal
+        if k eq 0 then begin
+          dim_im=size(im)
+          mat_im=fltarr(dim_im[1],dim_im[2],n_elements(pos_obj))
+          lsci_obj=strarr(n_elements(pos_obj))
+        endif
+        mat_im[*,*,k]=im
+        lsci_obj[k]=lsci[pos_obj[k]]
+        v_AIRMASS[k]=sxpar(h,'AIRMASS')
+        v_RA[k]=sxpar(h,'RA')
+        v_DEC[k]=sxpar(h,'DEC')
+        v_EPOCH[k]=sxpar(h,'EPOCH')
+        v_EXPTIME[k]=sxpar(h,'EXPTIME')
+        v_OBSID[k]=sxpar(h,'OBSID')
+        v_DATE[k]=sxpar(h,'DATE')
+        v_MJD[k]=sxpar(h,'MJDATE')
+      endfor
+;CR skipped
+      if n_elements(pos_obj) ge 2e6 then begin
+        stop
+        ;Cosmic ray rejection
+        cr_reject,mat_im,readn,0.,gain,1.0,comb_im,mask_cube=mask_cube,/noskyadjust,/bias,/init_med,/median_loop
+        for k=0,n_elements(ls_temp)-1 do begin
+          im_temp=mat_im[*,*,k]
+          im_mask=mask_cube[*,*,k]
+          pos_cr=where(im_mask lt 1)
+          if max(pos_cr) ne -1 then im_temp[pos_cr]=comb_im[pos_cr] ;replaces detected CR by the pixel value in the combined image
+          mat_im[*,*,k]=im_temp
+        endfor
+      endif
+      for k=0,n_elements(pos_obj)-1 do begin
+        ;reduces the 2d spectrum
+        sci2d=reduce(mat_im[*,*,k],matcoeff,wdt,slit_tilt)
+        ;corrects the illumination
+        sci2d=illumcorr(mat_im[*,*,k],sci2d,matcoeff,wdt,slit_tilt)
+        ;corrects for the flat field
+        sci2d=sci2d/flatN
+        ;extracts the spectrum
+        sci=extract(sci2d,wdt,spmd)
+        
+        s=size(im)
+        ;would save the extracted spectrum if the wavelength calibration is skipped
+        if keyword_set(skip_wavel) then begin
+          fits_open,reddir+'red_'+strmid(lsci_obj[k],strlen(datadir)),un,/write
+          ;would calibrate for the wavelength and save the final spectrum
+        endif else begin
+          final=wavel_cal(sci,wavel_sol_per_order,param=param)
+          fits_open,reddir+'ext_'+strmid(lsci_obj[k],strlen(datadir)),un,/write
+        endelse
+;        mkhdr,h,sci
+;        sxaddpar,h,'AIRMASS',v_AIRMASS[k]
+;        sxaddpar,h,'RA',v_RA[k]
+;        sxaddpar,h,'DEC',v_DEC[k]
+;        sxaddpar,h,'EPOCH',v_EPOCH[k]
+;        sxaddpar,h,'EXPTIME',v_EXPTIME[k]
+;        sxaddpar,h,'OBSID',v_OBSID[k]
+;        sxaddpar,h,'DATE',v_DATE[k]
+;        sxaddpar,h,'MJDATE',v_MJD[k]
+;        fits_write,un,sci,h,/no_data,extver=0
+        
+        for i=0,nord*idx-1 do begin
+          ;if the spectrum is NOT calibrated
+          if keyword_set(skip_wavel) then begin
+            spectrum=total(sci[i,*],1)
+            mkhdr,h,spectrum,/image
+            sxaddpar,h,'NAXIS',1
+            sxaddpar,h,'NAXIS1',s[2]
+            sxdelpar,h,'NAXIS2'
+            ;if the spectrum is calibrated
+          endif else begin
+            spectrum=total(final[i,*],1)
+            mkhdr,h,spectrum,/image
+            sxaddpar,h,'NAXIS',1
+            sxaddpar,h,'NAXIS1',s[2]
+            sxdelpar,h,'NAXIS2'
+            sxaddpar,h,'CTYPE1','WAVE-WAV-PLY'
+            sxaddpar,h,'CUNIT1','Angstrom'
+            sxaddpar,h,'DC-FLAG',0
+            sxaddpar,h,'CRPIX1',1
+            sxaddpar,h,'CRVAL1',param[0,i]
+            sxaddpar,h,'CD1_1',param[1,i]
+          endelse
+          if spmd eq 1 then ordname=strtrim(string(i+first_order),2) else if i mod 2 eq 0 then ordname=strtrim(string(i/2+first_order),2)+' sky' else ordname=strtrim(string(i/2+first_order),2)+' target'
+          fits_write,un,spectrum,h,extname='order '+ordname,extver=i+1
+        endfor
+        fits_close,un
+      endfor
+    endfor
     skip_loop:
   endfor
+  print,'Please cite the AJ paper:'
+  print,'https://ui.adsabs.harvard.edu/abs/2021AJ....161..109C/abstract'
 
   fin:
 end
