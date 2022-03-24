@@ -777,7 +777,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
   print,''
   print,'Author: Andre-Nicolas Chene'
   print,''
-  print,'version 1.4.0'
+  print,'version 1.4'
   print,''
   print,'Please cite the AJ paper:'
   print,'https://ui.adsabs.harvard.edu/abs/2021AJ....161..109C/abstract'
@@ -1459,9 +1459,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
         v_DATE[k]=sxpar(h,'DATE')
         v_MJD[k]=sxpar(h,'MJDATE')
       endfor
-;CR skipped
       if n_elements(pos_obj) ge 2e6 then begin
-        stop
         ;Cosmic ray rejection
         cr_reject,mat_im,readn,0.,gain,1.0,comb_im,mask_cube=mask_cube,/noskyadjust,/bias,/init_med,/median_loop
         for k=0,n_elements(ls_temp)-1 do begin
