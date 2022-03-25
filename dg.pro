@@ -902,7 +902,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
 
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;  LISTS CREATION
+  print,'1.  LISTS CREATION'
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   if keyword_set(utdate) then begin
@@ -955,7 +955,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
 
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;  BIAS FRAMES CREATION
+  print,'2.  BIAS FRAMES CREATION'
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   ;Takes the user's list of bias, if provided
@@ -1055,7 +1055,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
 
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;  ThAr FRAMES CREATION
+  print,'3.  ThAr FRAMES CREATION'
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   ;Takes the user's list of ThAr, if provided
@@ -1119,7 +1119,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
 
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;  FLAT FRAMES CREATION
+  print,'4.  FLAT FRAMES CREATION'
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   ;Takes the user's list of flats, if provided
@@ -1141,7 +1141,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
       ;if a Master Flat has already been processed, it takes this one.
       flat1f=readfits(reddir+'Flat1f'+flat1fdate+'.fits',/silent)
     endif else begin
-      ;IMPORTANT NOTE: MinMax rejection method used!
+      ;IMPORTANT NOTE: sigma clipping rejection method used!
       for i=0,n_elements(lflat1f)-1 do begin
         im=readfits(lflat1f[i],/silent)
         im_overs=overs_corr(im,hf) ;overscan corrected frame
@@ -1156,12 +1156,10 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
       for i=0,dim_flat_frame[1]-1 do begin
         for j=0,dim_flat_frame[2]-1 do begin
           temp=mat_flats[i,j,*]
-          ;removes minimum value
-          junk=min(temp,pos)
-          remove,min(pos),temp
-          ;removes maximum value
-          junk=max(temp,pos)
-          remove,max(pos),temp
+          ;finds the most deviant value
+          max_dev_sig=max(abs(temp-median(temp)),pos_cr)
+          ;removes it only if it is more deviant than 3 sig
+          if max_dev_sig gt 3*stddev(temp) then remove,pos_cr,temp
           ;records the mean
           flat1f[i,j]=mean(temp)
         endfor
@@ -1182,7 +1180,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
       ;if a Master Flat has already been processed, it takes this one.
       flat2f=readfits(reddir+'Flat2f'+flat2fdate+'.fits',/silent)
     endif else begin
-      ;IMPORTANT NOTE: MinMax rejection method used!
+      ;IMPORTANT NOTE: sigma clipping rejection method used!
       for i=0,n_elements(lflat2f)-1 do begin
         im=readfits(lflat2f[i],/silent)
         im_overs=overs_corr(im,hf) ;overscan corrected frame
@@ -1197,12 +1195,10 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
       for i=0,dim_flat_frame[1]-1 do begin
         for j=0,dim_flat_frame[2]-1 do begin
           temp=mat_flats[i,j,*]
-          ;removes minimum value
-          junk=min(temp,pos)
-          remove,min(pos),temp
-          ;removes maximum value
-          junk=max(temp,pos)
-          remove,max(pos),temp
+          ;finds the most deviant value
+          max_dev_sig=max(abs(temp-median(temp)),pos_cr)
+          ;removes it only if it is more deviant than 3 sig
+          if max_dev_sig gt 3*stddev(temp) then remove,pos_cr,temp
           ;records the mean
           flat2f[i,j]=mean(temp)
         endfor
@@ -1258,8 +1254,10 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
           wdt=wdt2f
           resel=resel2f
         endif else begin
-          print,''
-          if lsci2f ne !NULL then print,'ERROR: missing calibrations for the 2-fiber mode'
+          if lsci2f ne !NULL then begin
+            print,''
+            print,'ERROR: missing calibrations for the 2-fiber mode'
+          endif
           goto,fin
         endelse
       end
@@ -1274,7 +1272,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
 
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;  FINDING THE TRACES
+    print,'5.  FINDING THE TRACES'
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     ;Relies on the function "find_trace"
@@ -1304,7 +1302,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
 
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ; FINDING THE SLIT TILT
+    print,'6.  FINDING THE SLIT TILT'
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     ;Relies on the function "find_lines"
@@ -1336,7 +1334,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
 
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ; REDUCTION OF CALIBRATIONS
+    print,'7.  REDUCTION OF CALIBRATIONS'
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     wdt=wdt-1 ;the width is reduced by one pixel at this point; easier for reduction
 
@@ -1351,7 +1349,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
 
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ; LINE IDENTIFICATION
+    print,'8.  LINE IDENTIFICATION'
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;Extracts the ThAr spectrum for final line identification
     wavel2d=reduce(thar,matcoeff,wdt,slit_tilt)
@@ -1404,7 +1402,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
     endelse
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ; EXTRACTION
+    print,'9.  EXTRACTION'
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     ;LOOP ON SCIENCE FRAMES to get list of objects
@@ -1422,7 +1420,7 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
     
     ;Loop on each object
     for j=0,n_elements(nobj)-1 do begin
-      print,'Extracting ',nobj[j]
+      print,'   - Extracting ',nobj[j]
       pos_obj=where(nobj[j] eq obs_name)
       ;arrays to store keywords' values
       v_RA=fltarr(n_elements(pos_obj))
@@ -1470,12 +1468,13 @@ pro dg,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip
       if n_elements(pos_obj) ge 2 then begin
         ;Cosmic ray rejection
         cr_reject,mat_im,readn,0.,gain,1.0,comb_im,mask_cube=mask_cube,/noskyadjust,/bias,/init_med,/median_loop
-        for k=0,n_elements(ls_temp)-1 do begin
+        for k=0,n_elements(lsci_obj)-1 do begin
           im_temp=mat_im[*,*,k]
           im_mask=mask_cube[*,*,k]
           pos_cr=where(im_mask lt 1)
           if max(pos_cr) ne -1 then im_temp[pos_cr]=comb_im[pos_cr] ;replaces detected CR by the pixel value in the combined image
           mat_im[*,*,k]=im_temp
+          ;writefits,'cc'+strmid(lsci_obj[k],2),im_temp
         endfor
       endif
       for k=0,n_elements(pos_obj)-1 do begin
