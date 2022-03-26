@@ -211,7 +211,7 @@ end
 ;  FUNCTION EITHER USED TO FIND THE SLIT TILT OR THE LINE LIST (pix position)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; used to find the ThAr lines or to measure the slit tilt
-function find_lines,sp_1d,sp_2d,spmd,wdt,resel,nonlin,diror,find_tilt=find_tilt
+function find_lines,sp_1d,sp_2d,spmd,wdt,resel,nonlin,dg_dir,find_tilt=find_tilt
 s=size(sp_1d)
 ;the variable step is used to double the size of the matrix when also the sky
 ;  spectrum needs to be extracted in the 2-fiber mode
@@ -266,7 +266,7 @@ coeff_orders=[$
   ]
 
 ;ThAr line list (in Angstrom) from NOAO (iraf.noao.edu/specatlas/thar/thar_list)
-readcol,diror+'/ThAr_list.lst',format='(f)',ThAr_list,/silent
+readcol,dg_dir+'/ThAr_list.lst',format='(f)',ThAr_list,/silent
 
 lineHW=fix(resel*2)+1 ;value of a line half width at half max
 
@@ -735,7 +735,7 @@ return,final
 end
 
 
-pro dg,dir=dir,diror=diror,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip_wavel,ascii_file=ascii_file,new=new,logo=logo,help=help
+pro dg,dir=dir,dg_dir=dg_dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,skip_wavel=skip_wavel,ascii_file=ascii_file,new=new,logo=logo,help=help
 
   print,''
   print,''
@@ -806,6 +806,7 @@ pro dg,dir=dir,diror=diror,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,ski
     print,'INPUTS (all optional):'
     print,'        dir - Path to where the data can be found. A new directory named ""Reduction"" will'
     print,'              be created, if it does not already exist.'
+    print,'     dg_dir - Path to where the dg.pro is located.'
     print,'     utdate - Date when the spectra where observed. The format is YYYYMMDD, and can be'
     print,'              given as a number (without ''''). If it not provided, it is expected that the'
     print,'              data in the directory pointed by the input ""dir"" are all from the same date. '
@@ -843,12 +844,12 @@ pro dg,dir=dir,diror=diror,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,ski
     goto,fin
   endif
   
-  if keyword_set(diror) ne 1 then begin
+  if keyword_set(dg_dir) ne 1 then begin
     if file_test('dg.pro') ne 1 then begin
       print,'You need to run the script in the same directory as where dg.pro is located'
-      print,'or to give a value to diror.'
+      print,'or to give a value to dg_dir.'
       goto,fin
-    endif else spawn,'pwd',diror
+    endif else spawn,'pwd',dg_dir
   endif
   
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1318,7 +1319,7 @@ pro dg,dir=dir,diror=diror,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,ski
       ;extracts the ThAr frame, so we can find the lines
       tilt_1d=extract(tilt_2d,wdt,spmd)
       ;calls find_lines
-      slit_tilt=find_lines(tilt_1d,tilt_2d,spmd,wdt,resel,nonlin,diror,/find_tilt)
+      slit_tilt=find_lines(tilt_1d,tilt_2d,spmd,wdt,resel,nonlin,dg_dir,/find_tilt)
 
       ;records the result, so we do not need to recalculate it next time we reduce spectra from the same date
       openw,lun,reddir+'Tilt_'+spmd+thardate+'.dat',/get_lun  ;the tilts are recorded here
@@ -1376,7 +1377,7 @@ pro dg,dir=dir,diror=diror,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,ski
       fits_close,un
     endif else begin
       ;Finds the pix position of strongest lines
-      line_list=find_lines(wavel_sp,wavel2d,spmd,wdt,resel,nonlin,diror)
+      line_list=find_lines(wavel_sp,wavel2d,spmd,wdt,resel,nonlin,dg_dir)
       wavel_sol_per_order=wavel_sol(line_list,spmd,reddir,vec_lines_used=vec_lines_used)
       ;displays the identified lines in a multiple pages .ps file.
       ; note that most of the follow variables are tuned to give acceptable plots.
