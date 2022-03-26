@@ -801,12 +801,12 @@ pro dg,dir=dir,dg_dir=dg_dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,s
     print,'    (www.gemini.edu/sciops/instruments/graces)'
     print,'    '
     print,'CALLING SEQUENCE:'
-    print,'    dg[,dir=dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,/skip_wavel,/ascii_file,/new,/help]'
+    print,'    dg[,dir=dir,dg_dir=dg_dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,/skip_wavel,/ascii_file,/new,/help]'
     print,'    '
     print,'INPUTS (all optional):'
     print,'        dir - Path to where the data can be found. A new directory named ""Reduction"" will'
     print,'              be created, if it does not already exist.'
-    print,'     dg_dir - Path to where the dg.pro is located.'
+    print,'     dg_dir - Path to where the file dg.pro is located.'
     print,'     utdate - Date when the spectra where observed. The format is YYYYMMDD, and can be'
     print,'              given as a number (without ''''). If it not provided, it is expected that the'
     print,'              data in the directory pointed by the input ""dir"" are all from the same date. '
@@ -1241,8 +1241,10 @@ pro dg,dir=dir,dg_dir=dg_dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,s
           wdt=wdt1f
           resel=resel1f
         endif else begin
-          print,''
-          if lsci1f ne !NULL then print,'ERROR: missing calibrations for the 1-fiber mode'
+          if lsci1f ne !NULL then begin
+            print,''
+            print,'ERROR: missing calibrations for the 1-fiber mode'
+          endif
           goto,skip_loop
         endelse
       end
@@ -1503,16 +1505,6 @@ pro dg,dir=dir,dg_dir=dg_dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,s
           final=wavel_cal(sci,wavel_sol_per_order,param=param)
           fits_open,reddir+'ext_'+strmid(lsci_obj[k],strlen(datadir)),un,/write
         endelse
-;        mkhdr,h,sci
-;        sxaddpar,h,'AIRMASS',v_AIRMASS[k]
-;        sxaddpar,h,'RA',v_RA[k]
-;        sxaddpar,h,'DEC',v_DEC[k]
-;        sxaddpar,h,'EPOCH',v_EPOCH[k]
-;        sxaddpar,h,'EXPTIME',v_EXPTIME[k]
-;        sxaddpar,h,'OBSID',v_OBSID[k]
-;        sxaddpar,h,'DATE',v_DATE[k]
-;        sxaddpar,h,'MJDATE',v_MJD[k]
-;        fits_write,un,sci,h,/no_data,extver=0
         
         for i=0,nord*idx-1 do begin
           ;if the spectrum is NOT calibrated
@@ -1540,6 +1532,17 @@ pro dg,dir=dir,dg_dir=dg_dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,s
           fits_write,un,spectrum,h,extname='order '+ordname,extver=i+1
         endfor
         fits_close,un
+        ;add keywords to the main header
+        h=headfits(reddir+'ext_'+strmid(lsci_obj[k],strlen(datadir)),exten=0)
+        sxaddpar,h,'AIRMASS',v_AIRMASS[k]
+        sxaddpar,h,'RA',v_RA[k]
+        sxaddpar,h,'DEC',v_DEC[k]
+        sxaddpar,h,'EPOCH',v_EPOCH[k]
+        sxaddpar,h,'EXPTIME',v_EXPTIME[k]
+        sxaddpar,h,'OBSID',v_OBSID[k]
+        sxaddpar,h,'DATE',v_DATE[k]
+        sxaddpar,h,'MJDATE',v_MJD[k]
+        modfits,reddir+'ext_'+strmid(lsci_obj[k],strlen(datadir)),0,h,exten_no=0
       endfor
     endfor
     skip_loop:
