@@ -1432,13 +1432,14 @@ pro dg,dir=dir,dg_dir=dg_dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,s
       print,'   - Extracting ',nobj[j]
       pos_obj=where(nobj[j] eq obs_name)
       ;arrays to store keywords' values
+      v_OBJECT=strarr(n_elements(pos_obj))
       v_RA=fltarr(n_elements(pos_obj))
       v_DEC=fltarr(n_elements(pos_obj))
       v_EPOCH=fltarr(n_elements(pos_obj))
       v_EXPTIME=fltarr(n_elements(pos_obj))
       v_AIRMASS=fltarr(n_elements(pos_obj))
       v_OBSID=strarr(n_elements(pos_obj))
-      v_DATE=fltarr(n_elements(pos_obj))
+      v_DATE=strarr(n_elements(pos_obj))
       v_MJD=fltarr(n_elements(pos_obj))
       for k=0,n_elements(pos_obj)-1 do begin
         ;reads the science frame
@@ -1466,6 +1467,7 @@ pro dg,dir=dir,dg_dir=dg_dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,s
         mat_im[*,*,k]=im
         lsci_obj[k]=lsci[pos_obj[k]]
         v_AIRMASS[k]=sxpar(h,'AIRMASS')
+        v_OBJECT[k]=sxpar(h,'OBJECT')
         v_RA[k]=sxpar(h,'RA')
         v_DEC[k]=sxpar(h,'DEC')
         v_EPOCH[k]=sxpar(h,'EPOCH')
@@ -1535,6 +1537,7 @@ pro dg,dir=dir,dg_dir=dg_dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,s
         ;add keywords to the main header
         h=headfits(reddir+'ext_'+strmid(lsci_obj[k],strlen(datadir)),exten=0)
         sxaddpar,h,'AIRMASS',v_AIRMASS[k]
+        sxaddpar,h,'OBJECT',v_RA[k]
         sxaddpar,h,'RA',v_RA[k]
         sxaddpar,h,'DEC',v_DEC[k]
         sxaddpar,h,'EPOCH',v_EPOCH[k]
