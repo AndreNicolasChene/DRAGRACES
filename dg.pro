@@ -1432,18 +1432,27 @@ pro dg,dir=dir,dg_dir=dg_dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,s
       print,'   - Extracting ',nobj[j]
       pos_obj=where(nobj[j] eq obs_name)
       ;arrays to store keywords' values
-      v_OBJECT=strarr(n_elements(pos_obj))
-      v_RA=fltarr(n_elements(pos_obj))
-      v_DEC=fltarr(n_elements(pos_obj))
-      v_EPOCH=fltarr(n_elements(pos_obj))
-      v_EXPTIME=fltarr(n_elements(pos_obj))
-      v_AIRMASS=fltarr(n_elements(pos_obj))
-      v_OBSID=strarr(n_elements(pos_obj))
-      v_DATE=strarr(n_elements(pos_obj))
-      v_MJD=fltarr(n_elements(pos_obj))
+;      v_OBJECT=strarr(n_elements(pos_obj))
+;      v_RA=fltarr(n_elements(pos_obj))
+;      v_DEC=fltarr(n_elements(pos_obj))
+;      v_EPOCH=fltarr(n_elements(pos_obj))
+;      v_EXPTIME=fltarr(n_elements(pos_obj))
+;      v_AIRMASS=fltarr(n_elements(pos_obj))
+;      v_OBSID=strarr(n_elements(pos_obj))
+;      v_DATE=strarr(n_elements(pos_obj))
+;      v_MJD=fltarr(n_elements(pos_obj))
       for k=0,n_elements(pos_obj)-1 do begin
         ;reads the science frame
         im=readfits(lsci[pos_obj[k]],h,/silent)
+        ;list of keywords to record and pass to the reduced spectrum
+        if j eq 0 and k eq 0 then begin
+          temp=strmid(h,0,7)
+          ls_keywords=[temp[9:28],temp[41:101]]
+          ;arrays containing the keyword values, type and comments
+          array_keyw_val=strarr(n_elements(ls_keywords),n_elements(pos_obj))
+          array_keyw_typ=uintarr(n_elements(ls_keywords),n_elements(pos_obj))
+          array_keyw_com=strarr(n_elements(ls_keywords),n_elements(pos_obj))
+        endif
         ;adds the bzero value
         im+=float(sxpar(h,'BZERO'))
         ;corrects for the bias level using the overscan
@@ -1466,15 +1475,23 @@ pro dg,dir=dir,dg_dir=dg_dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,s
         endif
         mat_im[*,*,k]=im
         lsci_obj[k]=lsci[pos_obj[k]]
-        v_AIRMASS[k]=sxpar(h,'AIRMASS')
-        v_OBJECT[k]=sxpar(h,'OBJECT')
-        v_RA[k]=sxpar(h,'RA')
-        v_DEC[k]=sxpar(h,'DEC')
-        v_EPOCH[k]=sxpar(h,'EPOCH')
-        v_EXPTIME[k]=sxpar(h,'EXPTIME')
-        v_OBSID[k]=sxpar(h,'OBSID')
-        v_DATE[k]=sxpar(h,'DATE')
-        v_MJD[k]=sxpar(h,'MJDATE')
+        ;keywords
+        for ii=0,n_elements(ls_keywords)-1 do begin
+          temp=sxpar(h,ls_keywords[ii],comment=comment)
+          array_keyw_val[ii,k]=string(temp)
+          array_keyw_com[ii,k]=comment
+          s=size(temp)
+          array_keyw_typ[ii,k]=s[1]
+        endfor
+;        v_AIRMASS[k]=sxpar(h,'AIRMASS')
+;        v_OBJECT[k]=sxpar(h,'OBJECT')
+;        v_RA[k]=sxpar(h,'RA')
+;        v_DEC[k]=sxpar(h,'DEC')
+;        v_EPOCH[k]=sxpar(h,'EPOCH')
+;        v_EXPTIME[k]=sxpar(h,'EXPTIME')
+;        v_OBSID[k]=sxpar(h,'OBSID')
+;        v_DATE[k]=sxpar(h,'DATE')
+;        v_MJD[k]=sxpar(h,'MJDATE')
       endfor
       if n_elements(pos_obj) ge 2 then begin
         ;Cosmic ray rejection
@@ -1536,15 +1553,25 @@ pro dg,dir=dir,dg_dir=dg_dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,s
         fits_close,un
         ;add keywords to the main header
         h=headfits(reddir+'ext_'+strmid(lsci_obj[k],strlen(datadir)),exten=0)
-        sxaddpar,h,'AIRMASS',v_AIRMASS[k]
-        sxaddpar,h,'OBJECT',v_RA[k]
-        sxaddpar,h,'RA',v_RA[k]
-        sxaddpar,h,'DEC',v_DEC[k]
-        sxaddpar,h,'EPOCH',v_EPOCH[k]
-        sxaddpar,h,'EXPTIME',v_EXPTIME[k]
-        sxaddpar,h,'OBSID',v_OBSID[k]
-        sxaddpar,h,'DATE',v_DATE[k]
-        sxaddpar,h,'MJDATE',v_MJD[k]
+        for ii=0,n_elements(ls_keywords)-1 do begin
+          case array_keyw_typ[ii,k] of
+            2: sxaddpar,h,ls_keywords[ii],uint(array_keyw_val[ii,k]),array_keyw_com[ii,k]
+            3: sxaddpar,h,ls_keywords[ii],long(array_keyw_val[ii,k]),array_keyw_com[ii,k]
+            4: sxaddpar,h,ls_keywords[ii],float(array_keyw_val[ii,k]),array_keyw_com[ii,k]
+            5: sxaddpar,h,ls_keywords[ii],double(array_keyw_val[ii,k]),array_keyw_com[ii,k]
+            7: sxaddpar,h,ls_keywords[ii],array_keyw_val[ii,k],array_keyw_com[ii,k]
+            12: sxaddpar,h,ls_keywords[ii],uint(array_keyw_val[ii,k]),array_keyw_com[ii,k]
+          endcase
+        endfor
+;        sxaddpar,h,'AIRMASS',v_AIRMASS[k]
+;        sxaddpar,h,'OBJECT',v_RA[k]
+;        sxaddpar,h,'RA',v_RA[k]
+;        sxaddpar,h,'DEC',v_DEC[k]
+;        sxaddpar,h,'EPOCH',v_EPOCH[k]
+;        sxaddpar,h,'EXPTIME',v_EXPTIME[k]
+;        sxaddpar,h,'OBSID',v_OBSID[k]
+;        sxaddpar,h,'DATE',v_DATE[k]
+;        sxaddpar,h,'MJDATE',v_MJD[k]
         modfits,reddir+'ext_'+strmid(lsci_obj[k],strlen(datadir)),0,h,exten_no=0
       endfor
     endfor
