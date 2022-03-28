@@ -1240,6 +1240,11 @@ pro dg,dir=dir,dg_dir=dg_dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,s
           ts=ts1f
           wdt=wdt1f
           resel=resel1f
+          if lsci1f eq !NULL then begin
+            print,''
+            print,'There are no 1-fiber mode science spectra'
+            goto,skip_loop
+          endif
         endif else begin
           if lsci1f ne !NULL then begin
             print,''
@@ -1262,6 +1267,11 @@ pro dg,dir=dir,dg_dir=dg_dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,s
           ts=ts2f
           wdt=wdt2f
           resel=resel2f
+          if lsci2f eq !NULL then begin
+            print,''
+            print,'There are no 2-fiber mode science spectra'
+            goto,fin
+          endif
         endif else begin
           if lsci2f ne !NULL then begin
             print,''
@@ -1431,23 +1441,13 @@ pro dg,dir=dir,dg_dir=dg_dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,s
     for j=0,n_elements(nobj)-1 do begin
       print,'   - Extracting ',nobj[j]
       pos_obj=where(nobj[j] eq obs_name)
-      ;arrays to store keywords' values
-;      v_OBJECT=strarr(n_elements(pos_obj))
-;      v_RA=fltarr(n_elements(pos_obj))
-;      v_DEC=fltarr(n_elements(pos_obj))
-;      v_EPOCH=fltarr(n_elements(pos_obj))
-;      v_EXPTIME=fltarr(n_elements(pos_obj))
-;      v_AIRMASS=fltarr(n_elements(pos_obj))
-;      v_OBSID=strarr(n_elements(pos_obj))
-;      v_DATE=strarr(n_elements(pos_obj))
-;      v_MJD=fltarr(n_elements(pos_obj))
       for k=0,n_elements(pos_obj)-1 do begin
         ;reads the science frame
         im=readfits(lsci[pos_obj[k]],h,/silent)
         ;list of keywords to record and pass to the reduced spectrum
         if j eq 0 and k eq 0 then begin
-          temp=strmid(h,0,7)
-          ls_keywords=[temp[9:28],temp[41:101]]
+          temp=strmid(h,0,8)
+          ls_keywords=strcompress([temp[9:28],temp[41:101]],/remove_all)
           ;arrays containing the keyword values, type and comments
           array_keyw_val=strarr(n_elements(ls_keywords),n_elements(pos_obj))
           array_keyw_typ=uintarr(n_elements(ls_keywords),n_elements(pos_obj))
@@ -1483,15 +1483,6 @@ pro dg,dir=dir,dg_dir=dg_dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,s
           s=size(temp)
           array_keyw_typ[ii,k]=s[1]
         endfor
-;        v_AIRMASS[k]=sxpar(h,'AIRMASS')
-;        v_OBJECT[k]=sxpar(h,'OBJECT')
-;        v_RA[k]=sxpar(h,'RA')
-;        v_DEC[k]=sxpar(h,'DEC')
-;        v_EPOCH[k]=sxpar(h,'EPOCH')
-;        v_EXPTIME[k]=sxpar(h,'EXPTIME')
-;        v_OBSID[k]=sxpar(h,'OBSID')
-;        v_DATE[k]=sxpar(h,'DATE')
-;        v_MJD[k]=sxpar(h,'MJDATE')
       endfor
       if n_elements(pos_obj) ge 2 then begin
         ;Cosmic ray rejection
@@ -1563,15 +1554,6 @@ pro dg,dir=dir,dg_dir=dg_dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,s
             12: sxaddpar,h,ls_keywords[ii],uint(array_keyw_val[ii,k]),array_keyw_com[ii,k]
           endcase
         endfor
-;        sxaddpar,h,'AIRMASS',v_AIRMASS[k]
-;        sxaddpar,h,'OBJECT',v_RA[k]
-;        sxaddpar,h,'RA',v_RA[k]
-;        sxaddpar,h,'DEC',v_DEC[k]
-;        sxaddpar,h,'EPOCH',v_EPOCH[k]
-;        sxaddpar,h,'EXPTIME',v_EXPTIME[k]
-;        sxaddpar,h,'OBSID',v_OBSID[k]
-;        sxaddpar,h,'DATE',v_DATE[k]
-;        sxaddpar,h,'MJDATE',v_MJD[k]
         modfits,reddir+'ext_'+strmid(lsci_obj[k],strlen(datadir)),0,h,exten_no=0
       endfor
     endfor
