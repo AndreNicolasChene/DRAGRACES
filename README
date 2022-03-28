@@ -4,6 +4,9 @@ Please, feel free to modify it to your taste.
 If you want to share your improvements, please join us at:
   http://drforum.gemini.edu/topic/graces-pipeline-dragraces/
 
+Please cite the AJ paper:
+https://ui.adsabs.harvard.edu/abs/2021AJ....161..109C/abstract
+
 Andre-Nicolas Chene
 
 
@@ -97,15 +100,10 @@ ______________________________________________________________________________
 ------------------------------------------------------------------------------
 FUTURE IMPROVMENTS
 
-1. There is no rejection method used to create the Master calibrations files.
-   A future release should include rejections techniques, such as minmax or
-   sigma-clipping.
-2. There is no rejection method used when the spectra are extracted. A future
-   release should include cosmic ray rejections.
-3. The interpolation dealing with the trace curvature AND the slit tilt is
+1. The interpolation dealing with the trace curvature AND the slit tilt is
    a linear interpolation. It does an OK job, but is causing some artifacts
    near the edges of the traces. A future release should deal with that better.
-4. Each order contains 4640 pixels. However, the optical resolution elements
+2. Each order contains 4640 pixels. However, the optical resolution elements
    are slightly undersampled. Thanks to the slit tilt, we can reconstruct a
    little better the optical resolution elements. A future release will
    interpolate better the optical resolution elements.
@@ -115,6 +113,9 @@ ______________________________________________________________________________
 AUTHOR
 
 Andre-Nicolas Chene
+
+v1.4: Young Sun Lee helped significantly with the CR rejection method.
+
  -share your own work and your name could show up here too!
 
 
