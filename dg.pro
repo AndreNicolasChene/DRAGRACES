@@ -784,6 +784,7 @@ pro dg,dir=dir,dg_dir=dg_dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,s
   print,'~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*'
   print,''
   print,'Author: Andre-Nicolas Chene'
+  print,'Acknowledgements to Young Sun Lee for his help in including CR rejection.'
   print,''
   print,'version 1.4'
   print,''
