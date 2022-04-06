@@ -1446,7 +1446,7 @@ pro dg,dir=dir,dg_dir=dg_dir,utdate=utdate,lbias=lbias,lflat=lflat,lthar=lthar,s
         ;reads the science frame
         im=readfits(lsci[pos_obj[k]],h,/silent)
         ;list of keywords to record and pass to the reduced spectrum
-        if j eq 0 and k eq 0 then begin
+        if k eq 0 then begin
           temp=strmid(h,0,8)
           ls_keywords=strcompress([temp[9:28],temp[41:101]],/remove_all)
           ;arrays containing the keyword values, type and comments
